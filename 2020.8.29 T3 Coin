@@ -1,0 +1,82 @@
+#include<cstdio>
+#include<algorithm>
+#include<cctype>
+#include<cstring>
+using namespace std;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = true;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c != '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return flag ? res : -res;
+}
+const int Max_n = 105;
+int t , n , m , fa[Max_n * 4] , opt[Max_n * 4] , usm , cnt;
+char c[Max_n];
+bool vis[Max_n * 4];
+int find(int x)
+{
+	return fa[x] == x ? x : fa[x] = find(fa[x]);
+}
+inline void merge(int x , int y)
+{
+	fa[find(x)] = find(y);
+}
+inline void clean()
+{
+	memset(opt , 0 , sizeof(opt));
+	usm = cnt = 0;
+	memset(vis , false , sizeof(vis));
+}
+int main()
+{
+	t = read();
+	while(t --)
+	{
+		bool flag = false;
+		n = read() , m = read();
+		clean();
+		for(int i = 1 ; i <= (n + m) * 2 ; ++ i)
+			fa[i] = i;
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			scanf("%s" , c + 1);
+			for(int j = 1 ; j <= m ; ++ j)
+				if(c[j] == 'o')	merge(i , n + j) , merge(n + m + i , n + m + n + j);
+				else if(c[j] == 'x')	merge(n + m + i , n + j) , merge(i , n + m + n + j);
+		}
+		for(int i = 1 ; i <= n + m ; ++ i)
+			if(find(i) == find(n + m + i))
+			{
+				printf("%d\n" , (n + m) % 2);
+				flag = true;
+				break;
+			}
+		if(flag)	continue;
+		for(int i = n + m + 1 ; i <= (n + m) * 2 ; ++ i)
+			++ opt[find(i)];
+		for(int i = 1 ; i <= n + m ; ++ i)
+		{
+			if(vis[find(i)])	continue;
+			vis[find(i)] = vis[find(i + n + m)] = true;
+			if((opt[find(i)] % 2) != opt[find(i + n + m)] % 2)	++ usm;
+			else cnt += opt[find(i)] , cnt %= 2;
+		}
+		if(usm % 2)	putchar('3');
+		else if(cnt)	putchar('3');
+		else putchar('2');
+		putchar('\n');
+	}
+	return 0;
+}
