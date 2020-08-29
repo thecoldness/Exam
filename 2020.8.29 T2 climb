@@ -1,0 +1,197 @@
+
+#include<cstdio>
+#include<climits>
+#include<algorithm>
+#include<cctype>
+#include<cstring>
+using namespace std;
+typedef long long ll;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = true;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c != '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return flag ? res : -res;
+}
+const int Max_n = 1e5 + 5;
+int n , len , fin;
+ll c[Max_n] , s[Max_n];
+struct node{
+	int l , r;
+	ll minn , tag;
+	node(int a , int b)
+	{
+		l = a , r = b;
+	}
+	node(int a)
+	{
+		minn = a;
+	}
+	node(){}
+}tree[Max_n << 2] , tree_real[Max_n << 2];
+inline void push_up(int tr)
+{
+	tree[tr].minn = min(tree[tr * 2].minn , tree[tr * 2 + 1].minn);
+}
+inline void push_down(int tr)
+{
+	if(tree[tr].tag == 0)	return;
+	tree[tr * 2].tag += tree[tr].tag , tree[tr * 2 + 1].tag += tree[tr].tag;
+	tree[tr * 2].minn += tree[tr].tag , tree[tr * 2 + 1].minn += tree[tr].tag;
+	tree[tr].tag = 0;
+}
+void build(int ll , int rr , int tr)//tree[i] is refer to the ith day 
+{
+	tree[tr] = node(ll , rr) , tree[tr].tag = 0;
+	if(ll == rr)
+	{
+		tree[tr] = node(s[ll + 1] - c[ll]);
+		return;
+	}
+	int mid = (ll + rr) >> 1;
+	build(ll , mid , tr * 2);
+	build(mid + 1 , rr , tr * 2 + 1);
+	push_up(tr);
+}
+void add(int l , int r , int tr , int val)
+{
+	int ll = tree[tr].l , rr = tree[tr].r;
+	if(ll > r || rr < l)	return;
+	if(l <= ll && rr <= r)
+	{
+		tree[tr].minn += val;
+		tree[tr].tag += val;
+		return;
+	}
+	push_down(tr);
+	add(l , r , tr * 2 , val);
+	add(l , r , tr * 2 + 1 , val);
+	push_up(tr);
+}
+ll query(int l , int r , int tr)
+{
+	int ll = tree[tr].l , rr = tree[tr].r;
+	if(ll > r || rr < l)	return LLONG_MAX >> 1;
+	if(l <= ll && rr <= r)	return tree[tr].minn;
+	push_down(tr);
+	return min(query(l , r , tr * 2) , query(l , r , tr * 2 + 1));
+}
+void build_real(int ll , int rr , int tr)
+{
+	tree_real[tr] = node(ll , rr);
+	if(ll == rr)
+	{
+		tree_real[tr] = node(s[ll] - c[ll]);
+		return;
+	}
+	int mid = (ll + rr) >> 1;
+	build_real(ll , mid , tr * 2);
+	build_real(mid + 1 , rr , tr * 2 + 1);
+	tree_real[tr].minn = min(tree_real[tr * 2].minn , tree_real[tr * 2 + 1].minn);
+}
+ll query_real(int l , int r , int tr)
+{
+	int ll = tree_real[tr].l , rr = tree_real[tr].r;
+	if(ll > r || rr < l)	return LLONG_MAX >> 1;
+	if(l <= ll && rr <= r)	return tree_real[tr].minn;
+	return min(query_real(l , r , tr * 2) , query_real(l , r , tr * 2 + 1));
+}
+struct Node{
+	int a , b;
+	Node(int xx , int yy)
+	{
+		a = xx , b = yy;
+	}
+	Node(){}
+}candy[Max_n];
+inline bool cmp(Node xx , Node yy)
+{
+	return xx.a - xx.b > yy.a - yy.b;
+}
+int main()
+{
+	int ans = INT_MAX;
+	bool trick1 = false;
+	n = read() , len = read();
+	for(int i = 1 ; i <= n ; ++ i)
+	{
+		int ui , vi;
+		ui = read() , vi = read();
+		if(vi)	trick1 = true;
+		candy[i] = Node(ui , vi);
+	}
+	sort(candy + 1 , candy + n + 1 , cmp);
+	for(int i = 1 ; i <= n ; ++ i)
+		c[i] = read() + c[i - 1];
+	for(int i = 1 ; i <= n ; ++ i)
+		s[i] = candy[i].a - candy[i].b;
+	for(int i = 1 ; i <= n + 1 ; ++ i)
+		if(s[i] <= 0)
+		{
+			fin = i - 1;
+			break;
+		}
+	if(fin == 0)
+	{
+		for(int i = 1 ; i <= n ; ++ i)
+			if(candy[i].a >= len)
+			{
+				printf("1");
+				return 0;
+			}
+		printf("-1");
+		return 0;
+	}
+	for(int i = 1 ; i <= n + 1 ; ++ i)
+		s[i] += s[i - 1];
+	if(!trick1)
+	{
+		for(int i = 1 ; i <= n ; ++ i)
+			if(s[i] >= len)
+			{
+				printf("%d" , i);
+				return 0;
+			}
+			else if(s[i] <= c[i])
+			{
+				printf("-1");
+				return 0;
+			}
+		printf("-1");
+		return 0;
+	}
+	build(1 , n , 1);
+	build_real(1 , n , 1);
+	for(int k = 1 ; k <= n ; ++ k)
+	{
+		int pos = lower_bound(s , s + fin + 1 , len - candy[k].a) - s;
+		if(pos < k)
+		{
+			if(ans <= pos + 1)	continue;
+			if(query_real(1 , pos , 1) > 0)	ans = pos + 1;
+			continue;
+		}
+		pos = lower_bound(s , s + fin + 1 , len - candy[k].b) - s;
+		if(pos >= k && pos <= fin)
+		{
+			if(ans <= pos)	continue;
+			add(k , n + 1 , 1 , candy[k].b - candy[k].a);
+			if(query_real(1 , k - 1 , 1) > 0 && query(k , pos , 1) > 0)	ans = pos;
+			add(k , n + 1 , 1 , candy[k].a - candy[k].b);
+		}
+	}
+	if(ans == INT_MAX)	printf("-1");
+	else printf("%d" , ans);
+	return 0;
+}
