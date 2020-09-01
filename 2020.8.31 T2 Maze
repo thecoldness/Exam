@@ -1,0 +1,148 @@
+#include<cstdio>
+#include<algorithm>
+#include<cctype>
+#include<climits>
+#include<cstring>
+typedef long long ll;
+using namespace std;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = true;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c != '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return flag ? res : -res;
+}
+const int Max_n = 10;
+const int Max_m = 2e5 + 5;
+struct node{
+	int l , r;
+	ll f[6][6];
+	node(int a , int b)
+	{
+		l = a , r = b;
+	}
+	node(){}
+	ll* operator [](int a)
+	{
+		return f[a];
+	}
+}tree[Max_m << 2];//block can't transfer
+int mp[Max_n][Max_m] , n , m , opt , q;
+inline void merge(int goal , int ls , int rs , int mid)
+{
+	for(int i = 1 ; i <= n ; ++ i)
+		for(int j = 1 ; j <= n ; ++ j)
+			tree[goal][i][j] = INT_MAX;
+	for(int i = 1 ; i <= n ; ++ i)
+		for(int j = 1 ; j <= n ; ++ j)
+			for(int k = 1 ; k <= n ; ++ k)
+				if(mp[k][mid])	tree[goal][i][j] = min(tree[goal][i][j] , tree[ls][i][k] + tree[rs][k][j] + 1);
+}
+void build(int ll , int rr , int tr)
+{
+	tree[tr] = node(ll , rr);
+	for(int i = 1 ; i <= n ; ++ i)
+		for(int j = 1 ; j <= n ; ++ j)
+			tree[tr][i][j] = INT_MAX;
+	if(ll == rr)
+	{
+		for(int i = 1 ; i <= n ; ++ i)
+			if(mp[i][ll])	tree[tr][i][i] = 0;
+		for(int i = 1 ; i <= n ; ++ i)
+			for(int j = i + 1 ; j <= 5 ; ++ j)
+				if(mp[j - 1][ll])	tree[tr][i][j] = tree[tr][i][j - 1] + 1;
+		for(int i = 1 ; i <= n ; ++ i)
+			for(int j = i - 1 ; j >= 1 ; -- j)
+				if(mp[j + 1][ll])	tree[tr][i][j] = tree[tr][i][j + 1] + 1;
+		return;
+	}
+	int mid = (ll + rr) >> 1;
+	build(ll , mid , tr * 2);
+	build(mid + 1 , rr , tr * 2 + 1);
+	merge(tr , tr * 2 , tr * 2 + 1 , mid);
+}
+void change(int l , int r , int tr)
+{
+	int ll = tree[tr].l , rr = tree[tr].r;
+	if(ll > r || rr < l)	return;
+	if(ll == rr)
+	{
+		for(int i = 1 ; i <= n ; ++ i)
+			for(int j = 1 ; j <= n ; ++ j)
+				tree[tr][i][j] = INT_MAX;
+		for(int i = 1 ; i <= n ; ++ i)
+			if(mp[i][ll])	tree[tr][i][i] = 0;
+		for(int i = 1 ; i <= n ; ++ i)
+			for(int j = i + 1 ; j <= n ; ++ j)
+				if(mp[j - 1][ll])	tree[tr][i][j] = tree[tr][i][j - 1] + 1;
+		for(int i = 1 ; i <= n ; ++ i)
+			for(int j = i - 1 ; j >= 1 ; -- j)
+				if(mp[j + 1][ll])	tree[tr][i][j] = tree[tr][i][j + 1] + 1;
+		return;
+	}
+	int mid = (ll + rr) >> 1;
+	if(l > mid)	change(l , r , tr * 2 + 1);
+	else change(l , r , tr * 2);
+	merge(tr , tr * 2 , tr * 2 + 1 , tree[tr * 2].r);
+}
+inline node query(int l , int r , int tr)
+{
+	int ll = tree[tr].l , rr = tree[tr].r;
+	node ret;
+	for(int i = 1 ; i <= n ; ++ i)
+		for(int j = 1 ; j <= n ; ++ j)
+			ret[i][j] = INT_MAX;
+	if(ll > r || rr < l)	return ret;
+	if(l <= ll && rr <= r)	return tree[tr];
+	int mid = (ll + rr) >> 1;
+	if(r <= mid)	return query(l , r , tr * 2);
+	if(l > mid)	return query(l , r , tr * 2 + 1);
+	node retl = query(l , r , tr * 2) , retr = query(l , r , tr * 2 + 1);
+	for(int i = 1 ; i <= n ; ++ i)
+		for(int j = 1 ; j <= n ; ++ j)
+			for(int k = 1 ; k <= n ; ++ k)
+				if(mp[k][tree[tr * 2].r])	ret[i][j] = min(ret[i][j] , retl[i][k] + retr[k][j] + 1);
+	return ret;
+}
+int main()
+{
+	n = read() , m = read() , q = read();
+	for(int i = 1 ; i <= n ; ++ i)
+		for(int j = 1 ; j <= m ; ++ j)
+			mp[i][j] = read();
+	build(1 , m , 1);
+	while(q --)
+	{
+		opt = read();
+		if(opt == 1)
+		{
+			int a = read() , b = read();
+			mp[a][b] ^= 1;
+			change(b , b , 1);
+		}
+		else if(opt == 2)
+		{
+			int a = read() , b = read() , c = read() , d = read();
+			if(!mp[a][b] || !mp[c][d])
+			{
+				printf("-1\n");
+				continue;
+			}
+			int ans = query(b , d , 1)[a][c];
+			if(ans == (ll)INT_MAX)	printf("-1\n");
+			else printf("%d\n" , ans);
+		}
+	}
+	return 0;
+}
