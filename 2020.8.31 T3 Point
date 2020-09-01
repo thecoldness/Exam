@@ -1,0 +1,95 @@
+#include<cstdio>
+#include<cctype>
+#include<algorithm>
+#include<cstring>
+#include<vector> 
+using namespace std;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = true;
+	while(!isdigit(c))
+	{
+		flag = (c != '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return flag ? res : -res;
+}
+const int Max_n =5e5 + 5;
+int a[Max_n] , r[Max_n] , l[Max_n] , num , val , n , tot , len , head[Max_n] , tim;
+void write(int x)
+{
+	if(x > 9)	write(x / 10);
+	putchar('0' + x % 10);
+}
+inline void writeln(int x)
+{
+	write(x);
+	putchar('\n');
+}
+struct node{
+	int x , y;
+	node(int a , int b)
+	{
+		x = a , y = b;
+	}
+	node(){}
+};
+vector<node> v;
+inline bool cmp(node a , node b)
+{
+	if(a.x == b.x)	return a.y < b.y;
+	return a.x < b.x;
+}
+inline void writeblo(int x)
+{
+	write(x);
+	putchar(' ');
+}
+int main()
+{
+//	#ifndef MYDEBUG
+//	freopen("point.in" , "r" , stdin);
+//	freopen("point.out" , "w" , stdout);
+//	#endif
+	n = read();
+	for(int i = 1 ; i <= n ; ++ i)
+		a[i] = read();
+	for(int i = 1 ; i <= n ; ++ i)
+	{
+		l[i] = i - 1;
+		while(l[i] && !(a[l[i]] % a[i]))
+			l[i] = l[l[i]];
+	}
+	for(int i = n ; i >= 1 ; -- i)
+	{
+		r[i] = i + 1;
+		while((r[i] <= n) && !(a[r[i]] % a[i]))
+			r[i] = r[r[i]];
+	}
+	for(int i = 1 ; i <= n ; ++ i)
+		if(val < r[i] -l[i])	val = r[i] - l[i];
+	for(int i = 1 ; i <= n ; ++ i)
+		if(r[i] - l[i] == val)	v.push_back(node(l[i] , r[i]));
+	sort(v.begin() , v.end() , cmp);
+	int sz = v.size();
+	int ans[Max_n];
+	for(int i = 0 ; i < sz ; ++ i)
+	{
+		if(i && v[i].x == v[i - 1].x && v[i].y == v[i - 1].y)	continue;
+		++ num;
+		ans[num] = v[i].x + 1;
+	}
+	writeblo(num);
+	writeln(val - 2);
+	for(int i = 1 ; i < num ; ++ i)
+		writeblo(ans[i]);
+	write(ans[num]);
+	return 0;
+}
