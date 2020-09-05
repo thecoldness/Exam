@@ -1,0 +1,64 @@
+#include<cstdio>
+#include<algorithm>
+#include<cctype>
+using namespace std;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+const int Max_n = 2e3 + 5;
+int n , k;
+double pre[Max_n][Max_n] , aft[Max_n][Max_n] , p[Max_n];
+double f[Max_n][Max_n * 2];
+double ans , ret;
+void solve_1()
+{
+	f[0][n] = 1;
+	for(int i = 1 ; i <= n ; ++ i)
+		for(int j = 1 ; j <= 2 * n ; ++ j)
+			f[i][j] = f[i - 1][j - 1] * p[i] + f[i - 1][j + 1] * ((double)1 - p[i]);
+	printf("%.7lf" , f[n][n]);
+	exit(0);
+}
+int main()
+{
+	#ifdef MYDEBUG
+	freopen("data4.in" , "r" , stdin);
+	#endif
+	n = read() , k = read();
+	for(int i = 1 ; i <= n ; ++ i)
+		scanf("%lf" , p + i);
+	if(k == n)	
+		solve_1();
+	sort(p + 1 , p + n + 1);
+	pre[0][k] = aft[n + 1][k] = 1;
+	for(int i = 1 ; i <= k ; ++ i)
+		for(int j = 1 ; j <= 2 * k ; ++ j)
+			pre[i][j] = pre[i - 1][j - 1] * p[i] + pre[i - 1][j + 1] * ((double)1 - p[i]);
+	for(int i = n ; i >= n - k + 1 ; -- i)
+		for(int j = 1 ; j <= 2 * k ; ++ j)
+			aft[i][j] = aft[i + 1][j - 1] * p[i] + aft[i + 1][j + 1] * ((double)1 - p[i]);	
+	for(int i = 0 ; i <= k ; ++ i)
+	{
+		ans = pre[i][k] * aft[n - (k - i) + 1][k];
+		for(int j = 1 ; j <= k >> 1 ; ++ j)
+			ans += pre[i][k + j] * aft[n - (k - i) + 1][k - j] + pre[i][k - j] * aft[n - (k - i) + 1][k + j];
+		ret = max(ret , ans);
+	}		
+	printf("%.7lf" , ret);
+	return 0;
+}
