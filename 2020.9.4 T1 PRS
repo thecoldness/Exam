@@ -1,0 +1,82 @@
+#include<cstdio>
+#include<cctype>
+#include<algorithm>
+#include<cstring>
+#include<map>
+using namespace std;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+const int Max_n = 20;
+int cnt[5] , num , opt[5] , hav[5];
+int ans[Max_n + 5][(1 << Max_n) + 5];
+void divide(int l , int r , int col)
+{
+	if(l == r)
+	{
+		++ cnt[col];
+		return;
+	}
+	int mid = (l + r) >> 1;
+	divide(l , mid , col);
+	divide(mid + 1 , r , opt[col]);
+}
+void dfs_ans(int l , int r , int num , int dep)
+{
+	if(l == r)
+	{
+		ans[dep][l] = num;
+		return;
+	}
+	int mid = (l + r - 1) >> 1;
+	dfs_ans(l , mid , num , dep + 1);
+	dfs_ans(mid + 1 , r , opt[num] , dep + 1);
+	bool swp = false;
+	for(int i = 0 ; i < ((r - l + 1) >> 1) ; ++ i)
+		if(ans[dep + 1][l + i] > ans[dep + 1][mid + i + 1])
+		{
+			swp = true;
+			break;
+		}
+	if(!swp)
+		for(int i = l ; i <= r ; ++ i)
+			ans[dep][i] = ans[dep + 1][i];
+	else
+		for(int i = 0 ; i < ((r - l + 1) >> 1) ; ++ i)
+			ans[dep][l + i] = ans[dep + 1][mid + 1 + i] , ans[dep][mid + 1 + i] = ans[dep + 1][l + i];
+}
+map<int , char> mp;
+int main()
+{
+	hav[2] = read() , hav[1] = read() , hav[3] = read();
+	num = hav[1] + hav[2] + hav[3];
+	opt[1] = 2 , opt[2] = 3 , opt[3] = 1;
+	divide(1 , num , 1);
+	if((hav[1] == cnt[1]) && (hav[2] == cnt[2]) && (hav[3] == cnt[3]))	dfs_ans(1 , num , 1 , 1);
+	else if((cnt[1] == hav[2]) && (cnt[2] == hav[3]) && (cnt[3] == hav[1]))	dfs_ans(1 , num , 2 , 1);
+	else if((cnt[1] == hav[3]) && (cnt[2] == hav[1]) && (cnt[3] == hav[2]))	dfs_ans(1 , num , 3 , 1);
+	else
+	{
+		printf("IMPOSSIBLE");
+		return 0;
+	}
+	mp[1] = 'P' , mp[2] = 'R' , mp[3] = 'S';
+	for(int i = 1 ; i <= num ; ++ i)
+		putchar(mp[ans[1][i]]);
+	return 0;
+}
