@@ -1,0 +1,32 @@
+#include<cstdio>
+#include<cctype>
+#include<algorithm>
+#include<cstring>
+using namespace std;
+typedef long long ll;
+const int MOD = 998244353;
+const int Max_n = 1e6 + 5;
+int n , f[Max_n] , g[Max_n][30];
+char c[Max_n];
+ll ans;
+int main()
+{
+	scanf("%s" , c + 1);
+	n = strlen(c + 1);
+	for(int i = 1 ; i <= n ; ++ i)
+	{
+		int now = c[i] - 'a';
+		int pre = g[i - 1][now] - 1;
+		if(pre < 0)
+		{
+			g[i][now] = i;
+			continue;
+		}
+		f[i] = f[pre] + 1;
+		ans += f[i] , ans %= MOD;
+		memcpy(g[i] , g[pre] , sizeof(g[i]));
+		g[i][now] = i;
+	}
+	printf("%lld" , ans);
+	return 0;
+}
