@@ -1,0 +1,75 @@
+#include<cstdio>
+#include<algorithm>
+#include<cctype>
+#include<map>
+typedef long long ll;
+using namespace std;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+typedef unsigned long long  unll;
+map<pair<unll , unll> , int> mp;
+const int Max_n = 20;
+const int base = 131;
+int n;
+ll ans;
+char c[Max_n * 2];
+bool vis[Max_n * 2];
+void dfs(int now)
+{
+	if(now > 2 * n)
+	{
+		unsigned long long hhx = 0 , hhy = 0;
+		for(int i = n + 1 ; i <= 2 * n ; ++ i)
+			if(vis[i])	hhx = hhx * base + c[i];
+		for(int i = 2 * n ; i > n ; -- i)
+			if(!vis[i])	hhy = hhy * base + c[i];
+		++ mp[make_pair(hhx , hhy)];
+		return;
+	}
+	dfs(now + 1);
+	vis[now] = true;
+	dfs(now + 1);
+	vis[now] = false;
+}
+void dfs_ans(int now)
+{
+	if(now > n)
+	{
+		unll hhx = 0 , hhy = 0;
+		for(int i = 1 ; i <= n ; ++ i)
+			if(vis[i])	hhx = hhx * base + c[i];
+		for(int i = n ; i ; -- i)
+			if(!vis[i])	hhy = hhy * base + c[i];
+		ans += mp[make_pair(hhy , hhx)];
+		return;
+	}
+	dfs_ans(now + 1);
+	vis[now] = true;
+	dfs_ans(now + 1);
+	vis[now] = false;
+}
+int main()
+{
+	n = read();
+	scanf("%s" , c + 1);
+	dfs(n + 1);
+	dfs_ans(1);
+	printf("%lld" , ans / 2);
+	return 0;
+}
