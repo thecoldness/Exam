@@ -1,0 +1,58 @@
+#include<cstdio>
+#include<algorithm>
+#include<cctype>
+#include<cstring>
+using namespace std;
+typedef long long ll;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+const int Max_n = 1e6 + 5;
+char c[Max_n];
+int n , cnt[2] , num;
+ll ans;
+int main()
+{
+	n = read() , n = read();
+	scanf("%s" , c + 1);
+	for(int i = 1 ; i <= n ; ++ i)
+	{
+		if(c[i] == '1')	++ num;
+		++ cnt[num % 2];
+	}
+	for(int i = 1 ; i <= n ; ++ i)
+	{
+		ans += cnt[1];
+		if(c[i] == '1')	-- cnt[1] , swap(cnt[0] , cnt[1]);
+		else -- cnt[0];
+	}
+	int del = 0;
+	for(int i = 1 ; i <= n ; ++ i)
+		if(c[i] == '1')
+			ans -= del , del = 0;
+		else ++ del;
+	del = 0;
+	for(int i = n ; i ; -- i)
+		if(c[i] == '1')
+			ans -= del , del = 0;
+		else ++ del;
+	for(int i = 1 ; i <= n ; ++ i)
+		if(c[i] == '1')	-- ans; 
+	printf("%lld" , ans);
+	return 0;
+}
