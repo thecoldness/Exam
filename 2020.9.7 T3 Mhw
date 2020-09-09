@@ -1,0 +1,184 @@
+#include<cstdio>
+#include<vector>
+#include<cctype>
+#include<algorithm>
+#include<cstring>
+using namespace std;
+typedef long long ll;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+const int Max_n = 1e5 + 5;
+int n , m , d , check[Max_n * 8] , tot;
+ll cn[Max_n] , cm[Max_n];
+ll mx , mn;
+inline int lowbit(int x)
+{
+	return x & -x;
+}
+struct node{
+	int x , y;
+	node(int a , int b)
+	{
+		x = a , y = b;
+	}
+	node(){}
+}dotn[Max_n] , dotm[Max_n];
+int val[Max_n * 8] , len;
+inline void add(int pos , int val)
+{
+	for(int i = pos ; i <= len ; i += lowbit(i))
+		::val[i] += val;
+}
+inline int query(int pos)
+{
+	ll ret = 0;
+	for(int i = pos ; i ; i -= lowbit(i))
+		ret += ::val[i];
+	return ret;
+}
+inline void plu(int x)
+{
+	check[ ++ tot] = x;
+}
+inline int low(int x)
+{
+	return lower_bound(check + 1 , check + len , x) - check;
+}
+struct Node{
+	int flag;//false -> add , true query
+	ll x , ly , ry , id , k;
+	Node(ll b , ll c)
+	{
+		flag = 0 , x = b , ly = c;
+	}
+	Node(ll a , ll b , ll c , ll d , ll e)
+	{
+		flag = 1 , x = a , ly = b , ry = c , id = d , k = e;
+	}
+	Node(){}
+}opt[Max_n * 3];
+inline bool cmp(Node a , Node b)
+{
+	if(a.x == b.x)	return a.flag < b.flag;
+	return a.x < b.x;
+}
+inline void solve_n()
+{
+	for(int i = 1 ; i <= tot ; ++ i)
+	{
+		if(!opt[i].flag)
+		{
+			add(opt[i].ly , 1);
+			continue;
+		}
+		cn[opt[i].id] += opt[i].k * (query(opt[i].ry) - query(opt[i].ly));
+	}
+}
+inline void solve_m()
+{
+	for(int i = 1 ; i <= tot ; ++ i)
+	{
+		if(!opt[i].flag)
+		{
+			add(opt[i].ly , 1);
+			continue;
+		}
+		cm[opt[i].id] += opt[i].k * (query(opt[i].ry) - query(opt[i].ly));
+	}
+}
+signed main()
+{
+	n = read() , m = read() , d = read();
+	for(int i = 1 ; i <= n ; ++ i)
+	{
+		int ui = read() , vi = read();
+		dotn[i] = node(ui + vi , ui - vi);
+	}
+	for(int i = 1 ; i <= m ; ++ i)
+	{
+		int ui = read() , vi = read();
+		dotm[i] = node(ui + vi , ui - vi);
+	}
+	for(int i = 1 ; i <= n ; ++ i)
+	{
+		ll nowy = dotn[i].y , ly = nowy - d - 1 , ry = nowy + d;
+		plu(nowy) , plu(ly) , plu(ry);
+	}
+	for(int i = 1 ; i <= m ; ++ i)
+	{
+		ll nowy = dotm[i].y , ly = nowy - d - 1 , ry = nowy + d;
+		plu(nowy) , plu(ly) , plu(ry);
+	}
+	sort(check + 1 , check + tot + 1);
+	len = unique(check + 1 , check + tot + 1) - check;
+	tot = 0;
+	for(int i = 1 ; i <= n ; ++ i)
+	{
+		ll nowx = dotn[i].x , nowy = dotn[i].y;
+		ll lx = nowx - d - 1 , ly = nowy - d - 1;
+		ll rx = nowx + d , ry = nowy + d;
+		nowy = low(nowy) , ly = low(ly) , ry = low(ry);
+		opt[ ++ tot] = Node(lx , ly , ry , i , -1);
+		opt[ ++ tot] = Node(rx , ly , ry , i , 1);
+	}
+	for(int i = 1 ; i <= m ; ++ i)
+	{
+		ll nowx = dotm[i].x , nowy = dotm[i].y;
+		nowy = low(nowy);
+		opt[ ++ tot] = Node(nowx , nowy);
+	}
+	sort(opt + 1 , opt + tot + 1 , cmp);
+	solve_n();
+	memset(val , 0 , sizeof(val));
+	tot = 0;
+	for(int i = 1 ; i <= n ; ++ i)
+	{
+		ll nowx = dotn[i].x , nowy = dotn[i].y;
+		nowy = low(nowy);
+		opt[ ++ tot] = Node(nowx , nowy);
+	}
+	for(int i = 1 ; i <= m ; ++ i)
+	{
+		ll nowx = dotm[i].x , nowy = dotm[i].y;
+		ll lx = nowx - d - 1 , ly = nowy - d - 1;
+		ll rx = nowx + d , ry = nowy + d;
+		nowy = low(nowy) , ly = low(ly) , ry = low(ry);
+		opt[ ++ tot] = Node(lx , ly , ry , i , -1);
+		opt[ ++ tot] = Node(rx , ly , ry , i , 1);
+	}
+	sort(opt + 1 , opt + tot + 1 , cmp);
+	solve_m();
+	sort(cn + 1 , cn + n + 1) , sort(cm + 1 , cm + m + 1);
+	for(int i = 1 ; i <= n ; ++ i)
+	{
+		mx += (ll)cn[i] * (i - 1);
+		mx -= (ll)cn[i] * (cn[i] - 1) / 2;
+		mn += (ll)cn[i] * (n - i);
+		mn -= (ll)cn[i] * (cn[i] - 1) / 2;
+	}
+	for(int i = 1 ; i <= m ; ++ i)
+	{
+		mx += (ll)cm[i] * (i - 1);
+		mx -= (ll)cm[i] * (cm[i] - 1) / 2;
+		mn += (ll)cm[i] * (m - i);
+		mn -= (ll)cm[i] * (cm[i] - 1) / 2;
+	}
+	printf("%lld %lld" , mn , mx);
+	return 0;
+}
