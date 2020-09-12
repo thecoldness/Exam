@@ -1,0 +1,20 @@
+#include <cctype>
+#include <cstdio>
+#include <algorithm>
+#include <cstring>
+using namespace std;
+const int Max_n = 1e6 + 5;
+char c[Max_n];
+int st[Max_n] , tp , n , ans;
+int main()
+{
+	scanf("%s" , c + 1);
+	n = strlen(c + 1);
+	for(int i = 1 ; i <= n ; ++ i)
+	{
+		if(tp && c[st[tp]] == c[i])	ans += 10 , --tp;
+		else st[ ++ tp] = i;
+	}
+	printf("%d" , ans + 5 * tp / 2);
+	return 0;
+}
