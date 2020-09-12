@@ -1,0 +1,86 @@
+#include <cctype>
+#include <cstdio>
+#include <algorithm>
+#include <cstring>
+#include <map>
+#include <utility>
+using namespace std;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+typedef long long ll;
+const int MOD = 1e9 + 9 , Max_n = 30;
+int n , m , sta , a[Max_n][Max_n] , sym[Max_n];
+char opt;
+ll jc[Max_n] , ans;
+inline void check(int x , int cnt)
+{
+	if(x == sta)	ans += jc[cnt] , ans %= MOD;
+}
+void dfs_0(int now , int val , int cnt)
+{
+	if(now > n)
+	{
+		check(val , cnt);
+		return;
+	}
+	dfs_0(now + 1 , val , cnt);
+	dfs_0(now + 1 , val & sym[now] , ++ cnt);
+}
+void dfs_1(int now , int val , int cnt)
+{
+	if(now > n)
+	{
+		check(val , cnt);
+		return;
+	}
+	dfs_1(now + 1 , val , cnt);
+	dfs_1(now + 1 , val | sym[now] , cnt + 1);
+}
+void dfs_2(int now , int val , int cnt)
+{
+	if(now > n)
+	{
+		check(val , cnt);
+		return;
+	}
+	dfs_2(now + 1 , val , cnt);
+	dfs_2(now + 1 , val ^ sym[now] , ++ cnt);
+}
+int main()
+{
+	jc[0] = 1;
+	for(int i = 1 ; i <= 25 ; ++ i)
+		jc[i] = jc[i - 1] * i % MOD;
+	jc[0] = 0;
+	scanf("%c" , & opt);
+	n = read() , m = read();
+	for(int i = 1 ; i <= n + 1 ; ++ i)
+		for(int j = 1 ; j <= m ; ++ j)
+			a[i][j] = read();
+	for(int i = 1 ; i <= n ; ++ i)
+		for(int j = 1 ; j <= m ; ++ j)
+			if(a[i][j])	sym[i] += (1 << j);
+	for(int i = 1 ; i <= m ; ++ i)
+		if(a[n + 1][i])	sta += (1 << i);
+	if(opt == '&')	dfs_0(1 , (1 << 27) - 1 , 0);
+	if(opt == '|')	dfs_1(1 , 0 , 0);
+	if(opt == '^')	dfs_2(1 , 0 , 0);
+	printf("%lld" , ans);
+	return 0;
+}
