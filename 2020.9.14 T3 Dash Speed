@@ -1,0 +1,178 @@
+#include <cstdio>
+#include <cctype>
+#include <algorithm>
+#include <vector>
+using namespace std;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+const int Max_n = 7e4 + 5;
+struct node
+{
+	int l , r;
+	node(int a , int b)
+	{
+		l = a , r = b;
+	}
+	node() {}
+} tree[Max_n << 2] , dia[Max_n];
+vector<node> v[Max_n << 2];
+int n , m , fad[Max_n] , siz[Max_n] , tp , ans[Max_n << 2] , bel[Max_n] , tot;
+void build(int l , int r , int tr)
+{
+	tree[tr] = node(l , r);
+	if(l == r)
+	{
+		bel[l] = tr;
+		return;
+	}
+	int mid = (l + r) >> 1;
+	build(l , mid , tr * 2);
+	build(mid + 1 , r , tr * 2 + 1);
+}
+void modify(int l , int r , int from , int to , int tr)
+{
+	int ll = tree[tr].l , rr = tree[tr].r;
+	if(ll > r || rr < l)	return;
+	if(l <= ll && rr <= r)
+	{
+		v[tr].push_back(node(from , to));
+		return;
+	}
+	modify(l , r , from , to , tr * 2);
+	modify(l , r , from , to , tr * 2 + 1);
+}
+struct Node
+{
+	int from , to , szf , szt , fl , fr , tl , tr;
+	Node(int a , int b , int c , int d , int e , int f , int g , int h)
+	{
+		from = a , to = b , szf = c , szt = d , fl = e , fr = f , tl = g , tr = h;
+	}
+	Node() {}
+} st[Max_n];
+struct Edge
+{
+	int nex , to;
+	Edge(int a , int b)
+	{
+		nex = a , to = b;
+	}
+	Edge() {}
+} edge[Max_n * 2];
+int head[Max_n] , fa[Max_n][21] , dep[Max_n] , logm[Max_n];
+inline void add_edge(int x , int y)
+{
+	edge[ ++ tot] = Edge(head[x] , y) , head[x] = tot;
+	edge[ ++ tot] = Edge(head[y] , x) , head[y] = tot;
+}
+inline int lca(int x , int y)
+{
+	while(dep[x] < dep[y])
+		y = fa[y][logm[dep[y] - dep[x]]];
+	while(dep[y] < dep[x])
+		x = fa[x][logm[dep[x] - dep[y]]];
+	if(x == y)	return x;
+	for(int i = 20 ; i >= 0 ; -- i)
+	{
+		if(fa[x][i] == fa[y][i])	continue;
+		x = fa[x][i] , y = fa[y][i];
+	}
+	return fa[x][0];
+}
+inline int dist(int x , int y)
+{
+	int l = lca(x , y);
+	return dep[x] + dep[y] - 2 * dep[l];
+}
+void dfs_tree(int now , int from)
+{
+	fa[now][0] = from , dep[now] = dep[from] + 1;
+	for(int i = 1 ; i <= 20 ; ++ i)
+		fa[now][i] = fa[fa[now][i - 1]][i - 1];
+	for(int i = head[now] ; i ; i = edge[i].nex)
+	{
+		int nex = edge[i].to;
+		if(nex == from)	continue;
+		dfs_tree(nex , now);
+	}
+}
+inline int find(int x)
+{
+	while(fad[x] ^ x)	x = fad[x];
+	return fad[x];
+}
+inline int merge(int x , int y)
+{
+	int fx = find(x) , fy = find(y);
+	if(fx == fy)	return dist(dia[fx].l , dia[fy].r);
+	int l1 = dia[fx].l , r1 = dia[fx].r , l2 = dia[fy].l , r2 = dia[fy].r;
+	st[ ++ tp] = Node(fx , fy , siz[fx] , siz[fy] , l1 , r1 , l2 , r2);
+	if(siz[fx] < siz[fy])	swap(fx , fy);
+	fad[fx] = fy;
+	int ret = dist(l2 , r2);
+	if(ret < dist(l1 , r1))	ret = dist(l1 , r1) , dia[fy] = node(l1 , r1);
+	if(ret < dist(l1 , l2))	ret = dist(l1 , l2) , dia[fy] = node(l1 , l2);
+	if(ret < dist(l1 , r2))	ret = dist(l1 , r2) , dia[fy] = node(l1 , r2);
+	if(ret < dist(r1 , l2))	ret = dist(r1 , l2) , dia[fy] = node(r1 , l2);
+	if(ret < dist(r1 , r2))	ret = dist(r1 , r2) , dia[fy] = node(r1 , r2);
+	return ret;
+}
+inline void rec(int x)
+{
+	while(tp > x)
+	{
+		int xi = st[tp].from , yi = st[tp].to;
+		fad[xi] = xi , fad[yi] = yi;
+		siz[xi] = st[tp].szf , siz[yi] = st[tp].szt;
+		dia[xi] = node(st[tp].fl , st[tp].fr) , dia[yi] = node(st[tp].tl , st[tp].tr);
+		-- tp;
+	}
+}
+void dfs(int tr)
+{
+	int sz = v[tr].size();
+	for(int i = 0 ; i < sz ; ++ i)
+		ans[tr] = max(ans[tr] , merge(v[tr][i].l , v[tr][i].r));
+	if(tree[tr].l == tree[tr].r)	return;
+	ans[tr * 2] = ans[tr * 2 + 1] = ans[tr];
+	int beg = tp;
+	dfs(tr * 2);
+	rec(beg);
+	dfs(tr * 2 + 1);
+}
+int main()
+{
+	n = read() , m = read();
+	build(1 , n , 1);
+	for(int i = 1 ; i <= n ; ++ i)
+		fad[i] = i , siz[i] = 1 , dia[i] = node(i , i);
+	for(int i = 2 ; i <= n ; ++ i)
+		logm[i] = logm[i / 2] + 1;
+	for(int i = 1 ; i < n ; ++ i)
+	{
+		int ui = read() , vi = read() , li = read() , ri = read();
+		modify(li , ri , ui , vi , 1);
+		add_edge(ui , vi);
+	}
+	dfs_tree(1 , 0);
+	dfs(1);
+	for(int i = 1 ; i <= m ; ++ i)
+		printf("%d\n" , ans[bel[read()]]);
+	return 0;
+}
