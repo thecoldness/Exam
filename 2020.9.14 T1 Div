@@ -1,0 +1,47 @@
+#include <cstdio>
+#include <cctype>
+#include <algorithm>
+#include <map>
+using namespace std;
+inline int read()
+{
+	int res  =0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+const int Max_n = 205;
+int n , m , a[Max_n] , cnt[Max_n];
+map <int , int> mp;
+int main()
+{
+	n = read() , m = read();
+	for(int i = 1 ; i <= m ; ++ i)
+		a[i] = read();
+	cnt[0] = n;
+	for(int i = 1 ; i <= m ; ++ i)
+		for(int j = 1 ; j * j <= a[i] && j <= n ; ++ j)
+		{
+			if(a[i] % j)	continue;
+			int nowx = j , nowy = a[i] / j;
+			-- cnt[mp[nowx]];
+			++ cnt[ ++ mp[nowx]];
+			if(j * j == a[i] || nowy > n)	continue;
+			-- cnt[mp[nowy]];
+			++ cnt[ ++ mp[nowy]];
+		}
+	for(int i = 0 ; i <= m ; ++ i)
+		printf("%d\n" , cnt[i]);
+	return 0;
+}
