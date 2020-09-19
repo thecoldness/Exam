@@ -1,0 +1,92 @@
+#include <cstdio>
+#include <algorithm>
+#include <queue>
+#include <cctype>
+#include <climits>
+#include <cstring>
+using namespace std;
+typedef long long ll;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+const int Max_n = 1e3 + 5;
+int n , m , a , b , c , val[Max_n * Max_n] , dx[5] = {1 , -1 , 0 , 0} , dy[5] = {0 , 0 , 1 , -1};
+ll dis_a[Max_n * Max_n] , dis_b[Max_n * Max_n] , dis[Max_n * Max_n];
+inline int getpos(int x , int y)
+{
+	if(x < 1 || x > n || y < 1 || y > m)	return 0;
+	return (x - 1) * n + y;
+}
+struct node
+{
+	int pos;
+	ll dis;
+	bool operator < (const node &a)const
+	{
+		return dis > a.dis;
+	}
+	node(int a , ll b)
+	{
+		pos = a , dis = b;
+	}
+	node() {}
+};
+priority_queue<node> q;
+bool vis[Max_n * Max_n];
+inline void MSR(int beg)
+{
+	memset(dis , 0x3f , sizeof(dis));
+	memset(vis , false , sizeof(vis));
+	vis[0] = true;
+	dis[beg] = val[beg];
+	q.push(node(beg , dis[beg]));
+	while(!q.empty())
+	{
+		int now = q.top().pos;
+		ll de = q.top().dis;
+		q.pop();
+		if(vis[now])	continue;
+		vis[now] = true , dis[now] = de;
+		int nowx = now / n + 1 , nowy = now % n;
+		if(!nowy)	-- nowx , nowy = n;
+		for(int i = 0 ; i < 4 ; ++ i)
+		{
+			int nex = getpos(nowx + dx[i] , nowy + dy[i]);
+			if(vis[nex])	continue;
+			q.push(node(nex , de + val[nex]));
+		}
+	}
+}
+ll ans = LLONG_MAX;
+int main()
+{
+	n = read() , m = read() , a = read() , b = read() , c = read();
+	for(int i = 1 ; i <= n ; ++ i)
+		for(int j = 1 ; j <= m ; ++ j)
+			val[getpos(i , j)] = read();
+	MSR(getpos(1 , a));
+	memcpy(dis_a , dis , sizeof(dis));
+	MSR(getpos(n , b));
+	memcpy(dis_b , dis , sizeof(dis));
+	MSR(getpos(n , c));
+	for(int i = 1 ; i <= n ; ++ i)
+		for(int j = 1 ; j <= m ; ++ j)
+			ans = min(ans , dis_a[getpos(i , j)] + dis_b[getpos(i , j)] + dis[getpos(i , j)] - 2 * val[getpos(i , j)]);
+	printf("%lld" , ans);
+	return 0;
+}
