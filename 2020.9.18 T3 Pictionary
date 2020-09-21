@@ -1,0 +1,88 @@
+#include <cstdio>
+#include <algorithm>
+#include <cctype>
+using namespace std;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+const int Max_n = 1e5 + 5;
+int n , m , fa[Max_n] , dis[Max_n] , dep[Max_n] , q , tot , head[Max_n];
+struct node
+{
+	int nex , to;
+	node(int a , int b)
+	{
+		nex = a , to = b;
+	}
+	node() {}
+} edge[Max_n];
+inline void add_edge(int x , int y)
+{
+	edge[ ++ tot] = node(head[x] , y);
+	head[x] = tot;
+}
+inline int find(int x)
+{
+	while(fa[x] ^ x)	x = fa[x];
+	return fa[x];
+}
+inline void merge(int x , int y , int val)
+{
+	int fx = find(x) , fy = find(y);
+	if(fx == fy)	return;
+	if(dep[fx] > dep[fy])	swap(fx , fy);
+	fa[fx] = fy , dep[fy] = max(dep[fy] , dep[fx] + 1) , dis[fx] = val;
+	add_edge(fy , fx);
+}
+void dfs(int now)
+{
+	for(int i = head[now] ; i ; i = edge[i].nex)
+		dep[edge[i].to] = dep[now] + 1 , dfs(edge[i].to);
+}
+inline int lca(int x , int y)
+{
+	int ret = 0;
+	while(dep[x] < dep[y])	ret = max(ret , dis[y]) , y = fa[y];
+	while(dep[x] > dep[y])	ret = max(ret , dis[x]) , x = fa[x];
+	while(x ^ y)
+		ret = max(ret , dis[x]) , ret = max(ret , dis[y]) , x = fa[x] , y = fa[y];
+	return ret;
+}
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	n = read() , m = read() , q = read();
+	for(int i = 1 ; i <= n ; ++ i)
+		fa[i] = i , dep[i] = 1;
+	for(int i = m ; i ; -- i)//nlogn
+		for(int j = 2 ; j * i <= n ; ++ j)
+			merge(i , j * i , m - i + 1);//log
+	for(int i = 1 ; i <= n ; ++ i)
+		if(fa[i] == i)
+		{
+			dep[i] = 1;
+			dfs(i);//n
+			break;
+		}
+	for(int i = 1 ; i <= q ; ++ i)
+	{
+		int ui = read() , vi = read();
+		printf("%d\n" , lca(ui , vi));//qlogn
+	}
+	return 0;
+}
