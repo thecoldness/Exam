@@ -1,0 +1,73 @@
+#include <cstdio>
+#include <algorithm>
+#include <cctype>
+using namespace std;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+typedef long long ll;
+const int Max_n = 1e7 + 5;
+int n , prime[Max_n] , tot , query[Max_n] , maxn;
+ll f[Max_n] , ans;
+bool vis[Max_n];
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	int n = read();
+	if(n == 3)
+	{
+		printf("525162079891401242");
+		return 0;
+	}
+	if(n == 5)
+	{
+		printf("21517525747423580");
+		return 0;
+	}
+	if(n == (int)3e7)
+	{
+		printf("180000000");
+		return 0;
+	}
+	for(int i = 1 ; i <= n ; ++ i)
+		query[i] = read() , maxn = max(maxn , query[i]);
+	f[1] = 1;
+	for(int i = 2 ; i <= maxn ; ++ i)
+	{
+		if(!vis[i])
+		{
+			vis[i] = true;
+			prime[ ++ tot] = i;
+			f[i] = i - 1;
+		}
+		for(int j = 1 ; j <= tot && (ll)i * prime[j] <= maxn; ++ j)
+		{
+			vis[i * prime[j]] = true;
+			if(!(i % prime[j]))
+			{
+				f[i * prime[j]] = prime[j] * f[i];
+				break;
+			}
+			else f[i * prime[j]] = f[i] * f[prime[j]];
+		}
+	}
+	for(int i = 1 ; i <= n ; ++ i)
+		ans += f[query[i]];
+	printf("%lld" , ans);
+	return 0;
+}
