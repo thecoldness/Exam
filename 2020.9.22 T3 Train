@@ -1,0 +1,101 @@
+#include <cstdio>
+#include <cctype>
+#include <algorithm>
+using namespace std;
+typedef long long ll;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+const int Max_n = 5e5 + 5;
+struct node
+{
+	int nex , to;
+	node(int a , int b)
+	{
+		nex = a , to = b;
+	}
+	node() {}
+} edge[Max_n * 2];
+int fa[Max_n] , tree_fa[Max_n][25] , n , m , last , h[Max_n] , dep[Max_n] , logm[Max_n] , tot , head[Max_n];
+ll ans;
+inline void add_edge(int x , int y)
+{
+	edge[ ++ tot] = node(head[x] , y) , head[x] = tot;
+	edge[ ++ tot] = node(head[y] , x) , head[y] = tot;
+}
+void dfs(int now , int from)
+{
+	dep[now] = dep[from] + 1;
+	tree_fa[now][0] = from;
+	for(int i = 1 ; i <= logm[dep[now]] ; ++ i)
+		tree_fa[now][i] = tree_fa[tree_fa[now][i - 1]][i - 1];
+	for(int i = head[now] ; i ; i = edge[i].nex)
+	{
+		int nex = edge[i].to;
+		if(from == nex)	continue;
+		dfs(nex , now);
+	}
+}
+inline int lca(int x , int y)
+{
+	while(dep[x] > dep[y])
+		x = tree_fa[x][logm[dep[x] - dep[y]]];
+	while(dep[y] > dep[x])
+		y = tree_fa[y][logm[dep[y] - dep[x]]];
+	if(x == y)	return x;
+	for(int i = logm[dep[x]] ; i >= 0 ; -- i)
+	{
+		if(tree_fa[x][i] == tree_fa[y][i])	continue;
+		x = tree_fa[x][i] , y = tree_fa[y][i];
+	}
+	return tree_fa[x][0];
+}
+int find(int x)
+{
+	return fa[x] == x ? x : fa[x] = find(fa[x]);
+}
+void update(int x , int y)
+{
+	if(dep[x] < dep[y])	return;
+	fa[x] = find(tree_fa[x][0]);
+	update(find(tree_fa[x][0]) , y);
+}
+int main()
+{
+	n = read() , m = read() , last = read();
+	for(int i = 1 ; i < n ; ++ i)
+		add_edge(read() , read());
+	for(int i = 2 ; i <= n ; ++ i)
+		logm[i] = logm[i / 2] + 1;
+	dfs(1 , 0);
+	for(int i = 1 ; i <= n ; ++ i)
+		fa[i] = i;
+	for(int i = 1 ; i <= m ; ++ i)
+		h[i] = read();
+	for(int i = 1 ; i <= m ; ++ i)
+	{
+		if(fa[h[i]] ^ h[i])	continue;
+		int l = lca(last , h[i]);
+		ans += dep[last] + dep[h[i]] - 2 * dep[l];
+		update(last , l);
+		update(h[i] , l);
+		last = h[i];
+	}
+	printf("%lld" , ans);
+	return 0;
+}
