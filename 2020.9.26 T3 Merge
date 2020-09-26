@@ -1,0 +1,113 @@
+#include <cstdio>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+#include <queue>
+using namespace std;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+const int Max_m = 1e5 + 5;
+const int Max_n = 1e3 + 5;
+int fa[Max_n] , n , m , ans[Max_n] , head[Max_n] , tot , dep[Max_n];
+struct node
+{
+	int nex , to;
+	node(int a , int b)
+	{
+		nex = a , to = b;
+	}
+	node() {}
+} edge[Max_m * 2];
+int find(int x)
+{
+	return fa[x] == x ? x : fa[x] = find(fa[x]);
+}
+inline void merge(int x , int y)
+{
+	if(find(x) == find(y))	return;
+	fa[find(x)] = find(y);
+}
+inline void add_edge(int x , int y)
+{
+	edge[ ++ tot] = node(head[x] , y) , head[x] = tot;
+	edge[ ++ tot] = node(head[y] , x) , head[y] = tot;
+	merge(x , y);
+}
+bool vis[Max_n];
+void bfs(int beg)
+{
+	queue<int> q;
+	dep[beg] = 0;
+	q.push(beg);
+	vis[beg] = true;
+	while(!q.empty())
+	{
+		int now = q.front();
+		ans[find(now)] = max(ans[find(now)] , dep[now]);
+		q.pop();
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			if(vis[nex])	continue;
+			dep[nex] = dep[now] + 1;
+			q.push(nex);
+			vis[nex] = true;
+		}
+	}
+}
+int col[Max_n];
+void paint(int now , int col)
+{
+	if(::col[now])
+	{
+		if(::col[now] != col)
+		{
+			printf("-1");
+			exit(0);
+		}
+		return;
+	}
+	::col[now] = col;
+	for(int i = head[now] ; i ; i = edge[i].nex)
+	{
+		int nex = edge[i].to;
+		paint(nex , col ^ 1);
+	}
+}
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	n = read() , m = read();
+	for(int i = 1 ; i <= n ; ++ i)
+		fa[i] = i;
+	for(int i = 1 ; i <= m ; ++ i)
+		add_edge(read() , read());
+	for(int i = 1 ; i <= n ; ++ i)
+		if(!col[i])	paint(i , 2);
+	for(int i = 1 ; i <= n ; ++ i)
+	{
+		memset(vis , false , sizeof(vis));
+		bfs(i);
+	}
+	int cnt = 0;
+	for(int i = 1 ; i <= n ; ++ i)
+		cnt += ans[i];
+	printf("%d" , cnt);
+	return 0;
+}
