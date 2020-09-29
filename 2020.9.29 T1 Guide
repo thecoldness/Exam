@@ -1,0 +1,66 @@
+#include <cstdio>
+#include <cctype>
+#include <algorithm>
+#include <set>
+using namespace std;
+typedef long long ll;
+typedef multiset<int>::iterator iter;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+const int Max_n = 1e5 + 5;
+struct node
+{
+	int xi , yi , type;
+	node(int a , int b , int c)
+	{
+		xi = a , yi = b , type = c;//1 is the people, 2 is the out
+	}
+	node() {}
+} ele[Max_n * 2];
+inline bool cmp(node a , node b)
+{
+	if(a.xi == b.xi)	return a.yi > b.yi;
+	return a.xi > b.xi;
+}
+set<int> s;
+ll ans = 0;
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	int id = read() , n = read();
+	for(int i = 1 ; i <= n * 2 ; ++ i)
+	{
+		int ui = read() , vi = read();
+		ele[i] = node(ui , vi , i <= n);
+	}
+	sort(ele + 1 , ele + 2 * n + 1 , cmp);
+	for(int i = 1 ; i <= 2 * n ; ++ i)
+	{
+		if(ele[i].type == 1)
+		{
+			iter it = s.lower_bound(ele[i].yi);
+			if(it != s.end())
+				++ ans , s.erase(it);
+		}
+		else
+			s.insert(ele[i].yi);
+	}
+	printf("%lld" , ans);
+	return 0;
+}
