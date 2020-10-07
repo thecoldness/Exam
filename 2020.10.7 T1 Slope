@@ -1,0 +1,80 @@
+#include <cstdio>
+#include <cctype>
+#include <algorithm>
+#include <cmath>
+using namespace std;
+typedef long long ll;
+typedef __int128 lll;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+const int Max_n = 2e5 + 5;
+struct node
+{
+	ll xi , yi;
+	node(ll a , ll b)
+	{
+		xi = a , yi = b;
+	}
+	node() {}
+} pot[Max_n];
+int n;
+ll p , q , uansp , uansq , dansp , dansq;
+const double eps = 1e-9;
+inline bool cmp(node a , node b)
+{
+	return q * a.yi - p * a.xi < q * b.yi - p * b.xi;
+}
+int gcd(int x , int y)
+{
+	return y == 0 ? x : gcd(y , x % y);
+}
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	n = read() , p = read() , q = read();
+	for(int i = 1 ; i <= n ; ++ i)
+	{
+		int ui = read() , vi = read();
+		pot[i] = node(ui , vi);
+	}
+	sort(pot + 1 , pot + n + 1 , cmp);
+	for(int i = 2 ; i <= n ; ++ i)
+	{
+		ll tmpp = pot[i].yi - pot[i - 1].yi , tmpq = pot[i].xi - pot[i - 1].xi;
+		if(tmpp * tmpq < 0)	continue;
+		if(tmpq < 0 && tmpp * uansq >= tmpq * uansp)
+			uansp = tmpp , uansq = tmpq;
+		if(tmpq > 0 && tmpp * dansq <= tmpq * dansp)
+			dansp = tmpp , dansq = tmpq;
+	}
+	int g = gcd(uansp , uansq);
+	if(g)
+		uansp /= g , uansq /= g;
+	g = gcd(dansp , dansq);
+	if(g)
+		dansp /= g , dansq /= g;
+	if(!uansq)
+		printf("%lld/%lld\n" , dansp , dansq);
+	else if(!dansq)
+		printf("%lld/%lld\n" , uansp , uansq);
+	else if((lll) 2 * p * (dansq * uansq) <= (lll)(uansp * dansq + dansp * uansq) * q)
+		printf("%lld/%lld\n" , uansp , uansq);
+	else printf("%lld/%lld\n" , dansp , dansq);
+	return 0;
+}
