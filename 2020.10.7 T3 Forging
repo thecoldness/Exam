@@ -1,0 +1,144 @@
+#include <cstdio>
+#include <cctype>
+#include <algorithm>
+#include <cstring>
+#include <vector>
+using namespace std;
+typedef long long ll;
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+const int Max_n = 1e5 + 5;
+struct node
+{
+	int nex , to;
+	node(int a , int b)
+	{
+		nex = a , to = b;
+	}
+	node() {}
+} edge[Max_n];
+int head[Max_n] , tot , n , a[Max_n] , dep[Max_n] , check[Max_n] , len;
+inline void add_edge(int x , int y)
+{
+	edge[ ++ tot] = node(head[x] , y);
+	head[x] = tot;
+}
+struct Node
+{
+	int id , ki;
+	Node(int a , int b)
+	{
+		id = a , ki = b;
+	}
+	Node() {}
+};
+vector<Node> v[Max_n];
+inline void dfs_dep(int now)
+{
+	for(int i = head[now] ; i ; i = edge[i].nex)
+	{
+		int nex = edge[i].to;
+		dep[nex] = dep[now] + a[nex];
+		dfs_dep(nex);
+	}
+}
+struct tree_array
+{
+	ll val , cnt;
+	tree_array(ll a , ll b)
+	{
+		val = a , cnt = b;
+	}
+	tree_array() {}
+	void clean()
+	{
+		val = cnt = 0;
+	}
+} val[Max_n] , ans[Max_n];
+tree_array operator + (tree_array a , tree_array b)
+{
+	return tree_array(a.val + b.val , a.cnt + b.cnt);
+}
+tree_array operator - (tree_array a , tree_array b)
+{
+	return tree_array(a.val - b.val , a.cnt - b.cnt);
+}
+inline int lowbit(int x)
+{
+	return x & -x;
+}
+inline void add(int pos , int val)
+{
+	for(int i = pos ; i <= len ; i += lowbit(i))
+		:: val[i] = ::val[i] + tree_array(val , 1);
+}
+inline tree_array query(int pos)
+{
+	tree_array ret;
+	ret.clean();
+	for(int i = pos ; i ; i -= lowbit(i))
+		ret = ret + val[i];
+	return ret;
+}
+void dfs(int now)
+{
+	int de = check[dep[now]];
+	int sz = v[now].size();
+	for(int i = 0 ; i < sz ; ++ i)
+	{
+		int num = v[now][i].id , ki = v[now][i].ki;
+		ans[num] = ans[num] - (query(len) - query(lower_bound(check + 1 , check + len , de + ki) - check - 1));
+	}
+	add(dep[now] , de);
+	for(int i = head[now] ; i ; i = edge[i].nex)
+		dfs(edge[i].to);
+	for(int i = 0 ; i < sz ; ++ i)
+	{
+		int num = v[now][i].id , ki = v[now][i].ki;
+		ans[num] = ans[num] + (query(len) - query(lower_bound(check + 1 , check + len , de + ki) - check - 1));
+		ans[num].val -= ans[num].cnt * de;
+	}
+}
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	n = read();
+	for(int i = 2 ; i <= n ; ++ i)
+	{
+		add_edge(read() , i);
+		a[i] = read();
+	}
+	int m = read();
+	for(int i = 1 ; i <= m ; ++ i)
+	{
+		int ui = read() , vi = read();
+		v[ui].push_back(Node(i , vi));
+	}
+	dfs_dep(1);
+	for(int i = 1 ; i <= n ; ++ i)
+		check[i] = dep[i];
+	sort(check + 1 , check + n + 1);
+	len = unique(check + 1 , check + n + 1) - check;
+	for(int i = 1 ; i <= n ; ++ i)
+		dep[i] = lower_bound(check + 1 , check + len , dep[i]) - check;
+	dfs(1);
+	for(int i = 1 ; i <= m ; ++ i)
+		printf("%lld\n" , ans[i].val);
+	return 0;
+}
