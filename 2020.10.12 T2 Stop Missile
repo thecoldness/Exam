@@ -1,0 +1,116 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <cctype>
+using namespace std;
+
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+
+const int Max_n = 1e3 + 5;
+
+struct node
+{
+	int xi , yi , zi;
+	node(int a , int b , int c)
+	{
+		xi = a , yi = b , zi = c;
+	}
+	node() {}
+} a[Max_n];
+
+struct Node
+{
+	int nex , to;
+	Node(int a , int b)
+	{
+		nex = a , to = b;
+	}
+	Node() {}
+} edge[Max_n * Max_n * 2];
+
+inline bool cmp(node a , node b)
+{
+	if(a.xi != b.xi)	return a.xi < b.xi;
+	else if(a.yi != b.yi)	return a.yi < b.yi;
+	else return a.zi < b.zi;
+}
+
+int head[Max_n * 2] , n , link[Max_n * 2] , tot , cnt , f[Max_n] , ans;
+
+inline void add_edge(const int x , const int y)
+{
+	edge[ ++ tot] = Node(head[x] , y) , head[x] = tot;
+	edge[ ++ tot] = Node(head[y] , x) , head[y] = tot;
+}
+
+bool vis[Max_n];
+
+bool dfs(const int now)
+{
+	for(int i = head[now] ; i ; i = edge[i].nex)
+	{
+		int nex = edge[i].to;
+		if(vis[nex])	continue;
+		vis[nex] = true;
+		if(!link[nex] || dfs(link[nex]))
+		{
+			link[nex] = now;
+			return true;
+		}
+	}
+	return false;
+}
+
+inline bool cp(const node a , const node b)
+{
+	return (a.xi < b.xi) && (a.yi < b.yi) && (a.zi < b.zi);
+}
+
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	n = read();
+	for(int i = 1 ; i <= n ; ++ i)
+	{
+		int ui = read() , vi = read() , zi = read();
+		a[i] = node(ui , vi , zi);
+	}
+	sort(a + 1 , a + n + 1 , cmp);
+	for(int i = 1 ; i <= n ; ++ i)
+	{
+		f[i] = 1;
+		for(int j = 1 ; j < i ; ++ j)
+			if(cp(a[j] , a[i]))
+				f[i] = max(f[i] , f[j] + 1);
+		ans = max(ans , f[i]);
+	}
+	for(int i = 1 ; i <= n ; ++ i)
+		for(int j = 1 ; j <= n ; ++ j)
+			if(cp(a[i] , a[j]))
+				add_edge(i , j + n);
+	for(int i = 1 ; i <= n ; ++ i)
+	{
+		memset(vis , false , sizeof(vis));
+		if(dfs(n + i))
+			++ cnt;
+	}
+	printf("%d\n%d" , ans , n - cnt);
+	return 0;
+}
