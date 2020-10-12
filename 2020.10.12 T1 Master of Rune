@@ -1,0 +1,42 @@
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <algorithm>
+using namespace std;
+
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+
+const int Max_n = 1e3 + 5;
+
+int n , f[Max_n] , v[Max_n] , w[Max_n];
+
+int main()
+{
+	n = read();
+	for(int i = 1 ; i <= n ; ++ i)
+		v[i] = read();
+	for(int i = 1 ; i <= n ; ++ i)
+		w[i] = read();
+	for(int i = 1 ; i <= n ; ++ i)
+		for(int j = n ; j >= v[i] ; -- j)
+			f[j] = max(f[j] , f[j - v[i]] + w[i]);
+	printf("%d\n" , f[n]);
+	return 0;
+}
