@@ -1,0 +1,111 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <algorithm>
+#include <utility>
+#include <deque>
+#include <map>
+using namespace std;
+
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+
+const int Max_n = 1e5 + 5;
+const int Max_m = 2e5 + 5;
+
+int head[Max_n + Max_m * 2] , tp , tot , n , m;
+int bel[Max_n + Max_m * 2];
+
+bool vis[Max_m * 2 + Max_n];
+
+struct node
+{
+	int nex , to , val;
+	node(int a , int b , int c)
+	{
+		nex = a , to = b , val = c;
+	}
+	node() {}
+} edge[Max_m << 3];
+
+inline void add_edge(const int x , const int y , const int z)
+{
+	edge[ ++ tot] = node(head[x] , y , z);
+	head[x] = tot;
+}
+
+map<pair<int , int> , int >mp;
+
+struct God
+{
+	int id , dis;
+	God(int a , int b)
+	{
+		id = a , dis = b;
+	}
+	God() {}
+};
+
+deque<God> zzz;
+
+inline int dijie()
+{
+	zzz.push_back(God(1 , 0));
+	while(!zzz.empty())
+	{
+		int now = zzz.front().id , de = zzz.front().dis;
+		zzz.pop_front();
+		if(vis[now])	continue;
+		vis[now] = true;
+		if(bel[now] == n)
+			return de;
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to , va = edge[i].val;
+			if(vis[nex])	continue;
+			if(va)
+				zzz.push_back(God(nex , de + 1));
+			else zzz.push_front(God(nex , de));
+		}
+	}
+	return -1;
+}
+
+int main()
+{
+// 	freopen("data.in" , "r" , stdin);
+	tp = n = read() , m = read();
+	for(int i = 1 ; i <= m ; ++ i)
+	{
+		int ui = read() , vi = read() , ti = read();
+		if(mp.find(make_pair(ui , ti)) == mp.end())
+			mp[make_pair(ui , ti)] = ++ tp;
+		if(mp.find(make_pair(vi , ti)) == mp.end())
+			mp[make_pair(vi , ti)] = ++ tp;
+		int su = mp[make_pair(ui , ti)] , sv = mp[make_pair(vi , ti)];
+		bel[su] = ui , bel[sv] = vi;
+		add_edge(ui , su , 1) , add_edge(su , ui , 0);
+		add_edge(vi , sv , 1) , add_edge(sv , vi , 0);
+		add_edge(su , sv , 0) , add_edge(sv , su , 0);
+	}
+	for(int i = 1 ; i <= n ; ++ i)
+		bel[i] = i;
+	printf("%d\n" , dijie());
+	return 0;
+}
