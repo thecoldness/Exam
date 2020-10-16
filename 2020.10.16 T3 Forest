@@ -1,0 +1,152 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <algorithm>
+#include <set>
+#include <vector>
+#include <map>
+using namespace std;
+
+typedef long long ll;
+typedef multiset<int>::iterator iter;
+
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+
+const int Max_n = 1e5 + 5;
+const int MOD = 998244353;
+
+struct node
+{
+	int nex , to;
+	node(int a , int b)
+	{
+		nex = a , to = b;
+	}
+	node() {}
+} edge[Max_n * 2];
+
+int fa[Max_n] , head[Max_n] , tot , vis[35] , cnt;
+int n , m , sg[Max_n] , bigger[Max_n] , k[Max_n];
+
+ll ans , f[Max_n][35];
+
+vector<int> v[Max_n];
+
+int find(const int x)
+{
+	return fa[x] == x ? x : fa[x] = find(fa[x]);
+}
+
+inline void merge(const int x , const int y)
+{
+	fa[find(x)] = find(y);
+}
+
+inline void add_edge(const int x , const int y)
+{
+	merge(x , y);
+	edge[ ++ tot] = node(head[x] , y) , head[x] = tot;
+	edge[ ++ tot] = node(head[y] , x) , head[y] = tot;
+}
+
+multiset<int> s[Max_n];
+
+bool vs[Max_n];
+
+void dfs_sg(int now , int from)
+{
+	for(int i = head[now] ; i ; i = edge[i].nex)
+	{
+		int nex = edge[i].to;
+		if(nex == from)	continue;
+		dfs_sg(nex , now);
+	}
+	for(int i = head[now] ; i ; i = edge[i].nex)
+	{
+		int nex = edge[i].to;
+		if(nex == from)	continue;
+		vis[sg[nex]] = now;
+		s[now].insert(sg[nex]);
+	}
+	for(int i = 0 ; i <= 32 ; ++ i)
+		if(s[now].find(i) == s[now].end())
+		{
+			sg[now] = i;
+			break;
+		}
+}
+
+void dfs_change(int now , int from)
+{
+	for(int i = 0 ; i <= 32 ; ++ i)
+		if(s[now].find(i) == s[now].end())
+		{
+			sg[now] = i;
+			break;
+		}
+	v[find(now)].push_back(sg[now]);
+	for(int i = head[now] ; i ; i = edge[i].nex)
+	{
+		int nex = edge[i].to;
+		if(nex == from)	continue;
+		int lt = sg[nex];
+		iter it = s[now].find(lt);
+		s[now].erase(it);
+		for(int j = 0 ; j <= 32 ; ++ j)
+			if(s[now].find(j) == s[now].end())
+			{
+				sg[now] = j;
+				break;
+			}
+		s[nex].insert(sg[now]);
+		dfs_change(nex , now);
+		it = s[nex].find(sg[now]);
+		s[nex].erase(it);
+		s[now].insert(lt);
+	}
+}
+
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	memset(sg , 0x3f , sizeof(sg));
+	n = read() , m = read();
+	for(int i = 1 ; i <= n ; ++ i)
+		fa[i] = i;
+	for(int i = 1 ; i <= m ; ++ i)
+		add_edge(read() , read());
+	for(int i = 1 ; i <= n ; ++ i)
+		if(!vs[find(i)])
+			k[ ++ cnt] = find(i) , vs[find(i)] = true , dfs_sg(find(i) , 0);
+	memset(vs , false , sizeof(vs));
+	for(int i = 1 ; i <= n ; ++ i)
+		if(!vs[find(i)])
+			vs[find(i)] = true , dfs_change(find(i) , 0);
+	f[0][0] = 1;
+	for(int i = 1 ; i <= cnt ; ++ i)
+	{
+		int sz = v[k[i]].size();
+		for(int j = 0 ; j < sz ; ++ j)
+			for(int l = 0 ; l <= 32 ; ++ l)
+				f[i][l] += f[i - 1][l ^ v[k[i]][j]] , f[i][l] %= MOD;
+	}
+	printf("%lld\n" , f[cnt][0]);
+	return 0;
+}
