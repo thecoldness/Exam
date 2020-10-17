@@ -1,0 +1,86 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <algorithm>
+#include <cmath>
+#include <climits>
+using namespace std;
+
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+
+const int Max_n = 105;
+const int Max_s = 17;
+
+int pre[Max_n][1 << Max_s] , now[Max_n][1 << Max_s] , f[Max_n][1 << Max_s] , n;
+int mp[Max_n] , prime[Max_n] , tot , mindiv[Max_n] , a[Max_n] , ans , st[Max_n] , tp;
+
+inline void pre_work()
+{
+	for(int i = 2 ; i <= 60 ; ++ i)
+	{
+		if(!mindiv[i])
+			prime[ ++ tot] = i , mindiv[i] = i , mp[i] = tot;
+		for(int j = 1 ; j <= tot && prime[j] * i <= 60 ; ++ j)
+		{
+			mindiv[i * prime[j]] = prime[j];
+			if(i % prime[j] == 0)	break;
+		}
+	}
+}
+
+inline int find(int x)
+{
+	int ret = 0;
+	while(x != 1)
+	{
+		ret |= (1 << (mp[mindiv[x]] - 1));
+		x /= mindiv[x];
+	}
+	return ret;
+}
+
+int main()
+{
+	pre_work();
+	n = read();
+	for(int i = 1 ; i <= n ; ++ i)
+		a[i] = read();
+	memset(f , 0x3f , sizeof(f));
+	f[0][0] = 0;
+	for(int i = 1 ; i <= n ; ++ i)
+		for(int j = 1 ; j <= 59 ; ++ j)
+		{
+			int ret = find(j);
+			for(int s = 0 ; s < 1 << 17 ; ++ s)
+			{
+				if((s & ret) != ret)	continue;
+				if(f[i - 1][s ^ ret] + abs(a[i] - j) < f[i][s])
+					now[i][s] = j , pre[i][s] = s ^ ret , f[i][s] = f[i - 1][s ^ ret] + abs(a[i] - j);
+			}
+		}
+	for(int i = 1 ; i < 1 << 17 ; ++ i)
+		if(f[n][i] < f[n][ans])
+			ans = i;
+	for(int i = n ; i ; -- i)
+		st[ ++ tp] = now[i][ans] , ans = pre[i][ans];
+	while(tp)
+		printf("%d " , st[tp --]);
+	return 0;
+}
