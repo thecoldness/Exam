@@ -1,0 +1,54 @@
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <algorithm>
+using namespace std;
+
+const int Max_n = 505;
+
+char c[Max_n];
+
+int t , n , m , cnt[Max_n][2];
+
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return flag ? -res : res;
+}
+
+int main()
+{
+	t = read();
+	while(t --)
+	{
+		memset(cnt , 0 , sizeof(cnt));
+		n = read() , m = read();
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			scanf("%s" , c + 1);
+			for(int j = 1 ; j <= m ; ++ j)
+				++ cnt[j][c[j] - '0'];
+		}
+		int ans = 0;
+		for(int i = 1 ; i <= m ; ++ i)
+		{
+			int need = max(0 , 1 - cnt[i][0]) + max(0 , 2 - cnt[i][1]);
+			ans = max(ans , need);
+		}
+		printf("%d\n" , ans);
+	}
+	return 0;
+}
