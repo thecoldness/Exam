@@ -1,0 +1,87 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <cctype>
+using namespace std;
+
+const int Max_n = 45;
+
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return flag ? -res : res;
+}
+
+int spe[Max_n * 2] , sg[Max_n * 3] , n , t , ans;
+//14 0->4
+bool vis[30];
+
+int main()
+{
+	t = read();
+	for(int i = 1 ; i <= 70 ; ++ i)
+	{
+		memset(vis , false , sizeof(vis));
+		for(int j = 1 ; j <= i ; ++ j)
+		{
+			int nex = max(0 , j - 2) , tmp = max(0 , i - j - 1);
+			vis[spe[nex] ^ spe[tmp]] = true;
+		}
+		for(int j = 0 ; j < 25 ; ++ j)
+			if(!vis[j])
+			{
+				spe[i] = j;
+				break;
+			}
+	}
+	for(int i = 1 ; i <= 120 ; ++ i)
+	{
+		memset(vis , false , sizeof(vis));
+		for(int j = 1 ; j <= i ; ++ j)
+		{
+			int nex = max(0 , j - 2) , tmp = max(0 , i - j - 1);
+			vis[sg[nex] ^ sg[tmp]] = true;
+		}
+		for(int j = 0 ; j < 25 ; ++ j)
+			if(!vis[j])
+			{
+				sg[i] = j;
+				break;
+			}
+	}
+	for(int i = 1 ; i <= 34 ; ++ i)
+		sg[i] = sg[i + 68];
+	while(t --)
+	{
+		n = read() , ans = 0;
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			int ui = read();
+			if(ui <= 68)
+				ans ^= spe[ui];
+			else
+			{
+				if(ui % 34)
+					ans ^= sg[ui % 34];
+				else ans ^= sg[34];
+			}
+		}
+		if(ans)
+			puts("Alice");
+		else puts("Bob");
+	}
+	return 0;
+}
