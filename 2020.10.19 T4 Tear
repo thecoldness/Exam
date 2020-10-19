@@ -1,0 +1,112 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <algorithm>
+#include <map>
+using namespace std;
+
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+
+const int Max_n = 1e6 + 5;
+
+int f[Max_n][2] , n , m , a[Max_n] , type;
+int lastpos , g[Max_n];
+
+map<int , int> mp;
+
+inline void build_1()
+{
+	f[n][0] = n;
+	for(int i = n - 1 ; i ; -- i)
+		if(a[i] <= a[i + 1])
+			f[i][0] = f[i + 1][0];
+		else f[i][0] = i;
+}
+
+inline void build_2()
+{
+	f[n][0] = f[n][1] = n;//0 -> down 1 -> up
+	for(int i = n - 1 ; i ; -- i)
+	{
+		if(a[i] < a[i + 1])
+			f[i][1] = f[i + 1][1] , f[i][0] = i;
+		if(a[i] > a[i + 1])
+			f[i][1] = i , f[i][0] = f[i + 1][0];
+		if(a[i] == a[i + 1])
+			f[i][0] = f[i + 1][0] , f[i][1] = f[i + 1][1];
+	}
+}
+
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	n = read() , type = read();
+	for(int i = 1 ; i <= n ; ++ i)
+		a[i] = read();
+	if(type == 1)
+		build_1();
+	else build_2();
+	for(int i = 1 ; i <= n ; ++ i)
+		g[i] = max(f[i][0] , f[i][1]);
+	for(int i = 1 ; i < n ; ++ i)
+	{
+		if(g[i] == g[i + 1])
+			continue;
+		int xi = i , yi = g[i] , xj = i + 1 , yj = g[xj] , right , down;
+		right = (g[xj] >= g[xi] + 2);
+		for(int i = xi - 1 ; i > lastpos ; -- i)
+		{
+			right = !(right & 1);
+			mp[i + yi + 2] = right;
+		}
+		down = (g[xi] == g[xi - 1]);
+		for(int i = yi + 2 ; i <= yj ; ++ i)
+		{
+			down = !(down & 1);
+			mp[xi - 1 + i] = down;
+		}
+		mp[xj - 2 + yj + 1] = 1 , mp[xj + yj] = 0 , mp[xj - 1 + yj + 2] = 1;
+		lastpos = xj - 1;
+	}
+	m = read();
+	while(m --)
+	{
+		int li = read() , ri = read();
+		if(g[li] >= ri)
+		{
+			puts("liulei");
+			continue;
+		}
+		if(g[li] == ri - 1)
+		{
+			puts("se");
+			continue;
+		}
+		if(g[li] < ri && g[li + 1] >= ri)
+		{
+			puts("se");
+			continue;
+		}
+		if(mp[li + ri] == 0)
+			puts("liulei");
+		else puts("se");
+	}
+	return 0;
+}
