@@ -1,0 +1,127 @@
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <cstring>
+#include <climits>
+#include <algorithm>
+using namespace std;
+
+typedef long long ll;
+
+inline int read()
+{
+	int res = 0;
+	char c;
+	bool flag = false;
+	c = getchar();
+	while(!isdigit(c))
+	{
+		flag = (c == '-');
+		c = getchar();
+	}
+	while(isdigit(c))
+	{
+		res = res * 10 + (c ^ 48);
+		c = getchar();
+	}
+	return !flag ? res : -res;
+}
+
+const int Max_n = 5e5 + 5;
+
+struct node
+{
+	int l , r , minn;
+	node(int a , int b)
+	{
+		l = a , r = b , minn = INT_MAX;
+	}
+	node() {}
+} tree[Max_n << 2];
+
+int lsh[Max_n] , n , m , a[Max_n];
+int val[Max_n] , len , ans[Max_n];
+
+ll sum;
+
+inline int lowbit(const int x)
+{
+	return x & -x;
+}
+
+inline void add(const int pos , const int val)
+{
+	for(int i = pos ; i <= len ; i += lowbit(i))
+		::val[i] += val;
+}
+
+inline int query(const int pos)
+{
+	int ret = 0;
+	for(int i = pos ; i ; i -= lowbit(i))
+		ret += val[i];
+	return ret;
+}
+
+inline int find(const int x)
+{
+	return lower_bound(lsh + 1 , lsh + len , x) - lsh;
+}
+
+inline void push_up(const int tr)
+{
+	tree[tr].minn = min(tree[tr * 2].minn , tree[tr * 2 + 1].minn);
+}
+
+void build(int l , int r , int tr)
+{
+	tree[tr] = node(l , r);
+	if(l == r)
+	{
+		tree[tr].minn = a[l];
+		return;
+	}
+	int mid = (l + r) >> 1;
+	build(l , mid , tr * 2);
+	build(mid + 1 , r , tr * 2 + 1);
+	push_up(tr);
+}
+
+inline ll change(const int l , const int r , const int tr , const int val)
+{
+	int ll = tree[tr].l , rr = tree[tr].r;
+	if(ll > r || rr < l)
+		return 0;
+	if(tree[tr].minn > val)
+		return 0;
+	if(ll == rr)
+	{
+		int ret = ans[ll];
+		tree[tr].minn = INT_MAX;
+		return ret;
+	}
+	long long ret = change(l , r , tr * 2 , val) + change(l , r , tr * 2 + 1 , val);
+	push_up(tr);
+	return ret;
+}
+
+int main()
+{
+	n = read() , m = read();
+	for(int i = 1 ; i <= n ; ++ i)
+		lsh[i] = a[i] = read();
+	sort(lsh + 1 , lsh + n + 1);
+	len = unique(lsh + 1 , lsh + n + 1) - lsh;
+	for(int i = 1 ; i <= n ; ++ i)
+		a[i] = find(a[i]);
+	for(int i = n ; i ; -- i)
+		ans[i] = query(a[i] - 1) , add(a[i] , 1) , sum += ans[i];
+	build(1 , n , 1);
+	while(m --)
+	{
+		int pos = read();
+		sum -= change(pos , n , 1 , a[pos]);
+		printf("%lld\n" , sum);
+	}
+	return 0;
+}
