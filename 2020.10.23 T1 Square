@@ -1,0 +1,99 @@
+#include <cstdio>
+#include <cctype>
+#include <algorithm>
+#include <cstring>
+#include <map>
+#include <random>
+#include <chrono>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 1e5 + 5;
+
+	int n , a[Max_n] , prime[Max_n] , mindiv[Max_n] , tot;
+
+	ll rev[Max_n] , pre , ans;
+
+	map<ll , int> mp;
+
+	mt19937 rnd;
+
+	inline ll getr(ll l , ll r)
+	{
+		uniform_int_distribution<ll> dis(l , r);
+		return dis(rnd);
+	}
+
+	inline void build()
+	{
+		for(int i = 2 ; i <= a[0] ; ++ i)
+		{
+			if(!mindiv[i])
+				prime[ ++ tot] = i , mindiv[i] = i;
+			for(int j = 1 ; j <= tot && (ll)prime[j] * i <= a[0] ; ++ j)
+			{
+				mindiv[i * prime[j]] = prime[j];
+				if(i % prime[j] == 0)	break;
+			}
+		}
+		for(int i = 1 ; i <= tot ; ++ i)
+			rev[prime[i]] = getr(1 , 1e18);
+	}
+
+	inline ll calc(int x)
+	{
+		ll ret = 0;
+		while(x != 1)
+		{
+			int p = mindiv[x];
+			while(x % p == 0)
+				x /= p , ret ^= rev[p];
+		}
+		return ret;
+	}
+
+	inline void main()
+	{
+		rnd.seed(std::chrono::steady_clock::now().time_since_epoch().count());
+		n = read();
+		for(int i = 1 ; i <= n ; ++ i)
+			a[i] = read() , a[0] = max(a[0] , a[i]);
+		build();
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			++ mp[pre];
+			ll now = calc(a[i]);
+			pre ^= now;
+			ans += mp[pre];
+		}
+		printf("%lld\n" , ans);
+	}
+}
+
+signed main()
+{
+	thecold::main();
+	return 0;
+}
