@@ -1,0 +1,157 @@
+#include <cstdio>
+#include <cctype>
+#include <algorithm>
+#include <cstring>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 2e5 + 5;
+
+	int son[Max_n][2] , n , k , p , val[Max_n] , cnt[Max_n] , siz[Max_n];
+	int root , tot , ans , fa[Max_n];
+
+	inline void push_up(const int x)
+	{
+		siz[x] = siz[son[x][0]] + siz[son[x][1]] + cnt[x];
+	}
+
+	inline void rotate(int x)
+	{
+		int fx = fa[x] , ffx = fa[fa[x]];
+		if(ffx)
+			son[ffx][son[ffx][1] == fx] = x;
+		bool type = (x == son[fx][1]);
+		fa[x] = ffx , fa[fx] = x , fa[son[x][!type]] = fx;
+		son[fx][type] = son[x][!type] , son[x][!type] = fx;
+		push_up(fx) , push_up(x);
+	}
+
+	inline void splay(int x , int goal)
+	{
+		while(fa[x] != goal)
+		{
+			int fx = fa[x] , ffx = fa[fx];
+			if(ffx != goal)
+			{
+				bool type1 = (son[fx][1] == x) , type2 = (son[ffx][1] != fx);
+				if(type1 == type2)
+					rotate(fx);
+				else rotate(x);
+			}
+			rotate(x);
+		}
+		if(goal == 0)
+			root = x;
+	}
+
+	int find(int now , int hav)
+	{
+		if(siz[son[now][1]] < hav && siz[son[now][1]] + cnt[now] >= hav)
+			return val[now];
+		if(siz[son[now][1]] >= hav)
+			return find(son[now][1] , hav);
+		return find(son[now][0] , hav - siz[son[now][1]] - cnt[now]);
+	}
+
+	int ins(int &now , int va , int from)
+	{
+		if(!now)
+			now = ++ tot , val[now] = va , fa[now] = from;
+		if(val[now] == va)
+		{
+			++ cnt[now] , ++ siz[now];
+			return now;
+		}
+		int ret;
+		if(va < val[now])
+			ret = ins(son[now][0] , va , now);
+		else ret = ins(son[now][1] , va , now);
+		push_up(now);
+		return ret;
+	}
+
+	void del(int now , int va)
+	{
+		if(val[now] == va)
+		{
+			-- cnt[now] , -- siz[now];
+			return;
+		}
+		if(va > val[now])
+			del(son[now][1] , va);
+		else del(son[now][0] , va);
+		push_up(now);
+	}
+
+	inline void subtask_1()
+	{
+		while(n --)
+		{
+			int opt = read() , ret;
+			if(opt == 1)
+			{
+				ret = ins(root , read() , 0);
+				splay(ret , 0);
+			}
+			else
+			{
+				ret = find(root , k);
+				del(root , ret);
+				printf("%d\n" , ret);
+			}
+		}
+	}
+
+	inline void subtask_2()
+	{
+		while(n --)
+		{
+			int opt = read() , ret;
+			if(opt == 1)
+			{
+				ret = ins(root , read() ^ ans , 0);
+				splay(ret , 0);
+			}
+			else
+			{
+				ans = find(root , k);
+				del(root , ans);
+				printf("%d\n" , ans);
+			}
+		}
+	}
+
+	inline void main()
+	{
+		n = read() , k = read() , p = read();
+		if(p == 0)
+			subtask_1();
+		else subtask_2();
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
