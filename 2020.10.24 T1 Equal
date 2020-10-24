@@ -1,0 +1,93 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <algorithm>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	typedef unsigned long long nll;
+
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const nll base = 10;
+	const int Max_n = 2e5 + 5;
+
+	int n , m , len;
+
+	
+
+	nll pre[30][Max_n] , tmp1[30] , tmp2[30];
+
+	char c[Max_n];
+
+	inline nll quickpow(nll x , int y)
+	{
+		nll ret = 1;
+		while(y)
+		{
+			if(y & 1)
+				ret *= x;
+			y >>= 1 , x *= x;
+		}
+		return ret;
+	}
+
+	inline void main()
+	{
+		// freopen("data.in" , "r" , stdin);
+		n = read() , m = read();
+		scanf("%s" , c + 1);
+		for(int i = 0 ; i < 26 ; ++ i)
+			for(int j = 1 ; j <= n ; ++ j)
+			{
+				pre[i][j] = pre[i][j - 1] * base;
+				if(c[j] == i + 'a')
+					++ pre[i][j];
+			}
+		while(m --)
+		{
+			bool fin = false;
+			int li = read() , ri = read() , zi = read();
+			for(int i = 0 ; i < 26 ; ++ i)
+			{
+				tmp1[i] = pre[i][li + zi - 1] - pre[i][li - 1] * quickpow(base , zi); 
+				tmp2[i] = pre[i][ri + zi - 1] - pre[i][ri - 1] * quickpow(base , zi);
+			}
+			sort(tmp1 , tmp1 + 26) , sort(tmp2 , tmp2 + 26);
+			for(int i = 0 ; i < 26 ; ++ i)
+				if(tmp1[i] != tmp2[i])
+				{
+					puts("NO");
+					fin = true;
+					break;
+				}
+			if(!fin)
+				puts("YES");
+		}
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
