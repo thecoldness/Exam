@@ -1,0 +1,91 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <algorithm>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 1e6;
+
+	int n , k , pre , siz[Max_n << 5] , son[Max_n << 5][2];
+	int root , tot;
+
+	ll ans;
+
+	void ins(int val , int dep , int& now)
+	{
+		if(!now)
+			now = ++ tot;
+		++ siz[now];
+		if(dep == 0)	return;
+		if(val & (1 << (dep - 1)))
+			ins(val , dep - 1 , son[now][1]);
+		else ins(val , dep - 1 , son[now][0]);
+	}
+
+	void check(int val , int dep , int now)
+	{
+		if(!now || dep == 0)
+		{
+			ans += siz[now];
+			return;
+		}
+		if(k & (1 << (dep - 1)))
+		{
+			if(val & (1 << (dep - 1)))
+				check(val , dep - 1 , son[now][0]);
+			else check(val , dep - 1 , son[now][1]);
+			return;
+		}
+		if(val & (1 << (dep - 1)))
+		{
+			ans += siz[son[now][0]];
+			check(val , dep - 1 , son[now][1]);
+		}
+		else
+		{
+			ans += siz[son[now][1]];
+			check(val , dep - 1 , son[now][0]);
+		}
+	}
+
+	inline void main()
+	{
+		n = read() , k = read();
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			ins(pre , 31 , root);
+			pre ^= read();
+			check(pre , 31 , root);
+		}
+		printf("%lld\n" , ans);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
