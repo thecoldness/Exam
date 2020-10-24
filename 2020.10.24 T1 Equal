@@ -28,12 +28,10 @@ namespace thecold
 		return !flag ? res : -res;
 	}
 
-	const nll base = 10;
+	const nll base = 233;
 	const int Max_n = 2e5 + 5;
 
 	int n , m , len;
-
-	
 
 	nll pre[30][Max_n] , tmp1[30] , tmp2[30];
 
@@ -61,7 +59,7 @@ namespace thecold
 			{
 				pre[i][j] = pre[i][j - 1] * base;
 				if(c[j] == i + 'a')
-					++ pre[i][j];
+					pre[i][j] += 'a';
 			}
 		while(m --)
 		{
