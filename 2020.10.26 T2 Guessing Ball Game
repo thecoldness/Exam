@@ -1,0 +1,60 @@
+#include <cstdio>
+#include <cctype>
+#include <algorithm>
+#include <cstring>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 1e5 + 5;
+
+	int a[Max_n][15] , n , m , rev[15];
+
+	inline void main()
+	{
+		// freopen("data.in" , "r" , stdin);
+		n = read() , m = read();
+		for(int i = 0 ; i <= 9 ; ++ i)
+			a[0][i] = i;
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			memcpy(a[i] , a[i - 1] , sizeof(a[i]));
+			int ui = read() , vi = read();
+			swap(a[i][ui] , a[i][vi]);
+		}
+		while(m --)
+		{
+			int li = read() - 1 , ri = read();
+			for(int i = 0 ; i <= 9 ; ++ i)
+				rev[a[li][i]] = i;
+			for(int i = 0 ; i <= 9 ; ++ i)
+				printf("%d " , rev[a[ri][i]]);
+			puts("");
+		}
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
