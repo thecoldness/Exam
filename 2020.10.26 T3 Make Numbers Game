@@ -1,0 +1,91 @@
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <algorithm>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int Max_len = 5e7;
+	const int Max_n = 1e5 + 5;
+	const ll inf = 1e9 + 5;
+
+	int root[Max_n] , n , m , cnt_tr;
+	int ls[Max_len] , rs[Max_len];
+
+	ll sum[Max_len];
+
+	void ins(int& now , int last , int l , int r , ll val)
+	{
+		now = ++ cnt_tr;
+		sum[now] = sum[last] + val;
+		if(l == r)	return;
+		ls[now] = ls[last] , rs[now] = rs[last];
+		int mid = (l + r) >> 1;
+		if(mid >= val)
+			ins(ls[now] , ls[last] , l , mid , val);
+		else ins(rs[now] , rs[last] , mid + 1 , r , val);
+	}
+
+	ll query(int pre , int now , int ll , int rr , int l , int r)
+	{
+		if(ll > r || rr < l)	return 0;
+		if(l <= ll && rr <= r)
+			return sum[now] - sum[pre];
+		int mid = (ll + rr) >> 1;
+		return query(ls[pre] , ls[now] , ll , mid , l , r) + query(rs[pre] , rs[now] , mid + 1 , rr , l , r);
+	}
+
+	inline void main()
+	{
+		// freopen("data.in" , "r" , stdin);
+		n = read() , m = read();
+		for(int i = 1 ; i <= n ; ++ i)
+			ins(root[i] , root[i - 1] , 1 , inf , read());
+		while(m --)
+		{
+			int li = read() - 1 , ri = read();
+			ll ans = 0;
+			while(true)
+			{
+				ll ret = query(root[li] , root[ri] , 1 , inf , 1 , min(ans + 1 , inf));
+				if(ans + 1 >= inf)
+				{
+					ans = ret;
+					break;
+				}
+				if(ret > ans)
+					ans = ret;
+				else break;
+			}
+			printf("%lld\n" , ans + 1);
+		}
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
