@@ -1,0 +1,59 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <cctype>
+using namespace std;
+
+namespace thecold
+{
+    typedef long long ll;
+
+    inline ll read()
+    {
+        ll res = 0;
+        char c;
+        c = getchar();
+        while(!isdigit(c))
+            c = getchar();
+        while(isdigit(c))
+        {
+            res = res * 10 + (c ^ 48);
+            c = getchar();
+        }
+        return res;
+    }
+
+    ll gcd(ll a , ll b)
+    {
+        return b == 0 ? a : gcd(b , a % b);
+    }
+
+    ll t , a , b , c , z;
+
+    inline void main()
+    {
+        // freopen("data.in" , "r" , stdin);
+        t = read();
+        while(t --)
+        {
+            a = read() , b = read() , c = read() , z = read();
+            ll tmp = gcd(a , gcd(b , c));
+            if(!tmp)
+            {
+                if(z)
+                    puts("NO");
+                else puts("YES");
+                continue;
+            }
+            if(z % tmp)
+                puts("NO");
+            else puts("YES");
+        }
+    }
+}
+
+int main()
+{
+    thecold::main();
+    return 0;
+}
