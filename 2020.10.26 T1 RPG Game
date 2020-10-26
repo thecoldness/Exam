@@ -1,0 +1,154 @@
+#include <cstdio>
+#include <cctype>
+#include <algorithm>
+#include <cstring>
+#include <vector>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 1e5 + 5;
+	const int Max_len = 5e6;
+
+	vector<int> val[Max_n] , buff[Max_n];
+
+	vector<ll> f[Max_n];
+
+	struct node
+	{
+		ll ki , bi;
+		node(ll a , ll b)
+		{
+			ki = a , bi = b;
+		}
+		node(){}
+	}seg[Max_n];
+
+	int root[Max_n] , ls[Max_len] , rs[Max_len] , id[Max_len];
+	int n , m , tot , cnt_tr;
+
+	ll ans;
+
+	inline int lowbit(const int x)
+	{
+		return x & -x;
+	}
+
+	inline ll calc(const int pos , const int bel)
+	{
+		return 1ll * pos * seg[bel].ki + seg[bel].bi;
+	}
+
+	void change(int &now , int bel , int l , int r)
+	{
+		if(!now)
+			now = ++ cnt_tr;
+		if(!id[now])
+		{
+			id[now] = bel;
+			return;
+		}
+		ll nowl = calc(l , bel) , nowr = calc(r , bel) , oldl = calc(l , id[now]) , oldr = calc(r , id[now]);
+		if(nowl >= oldl && nowr >= oldr)
+		{
+			id[now] = bel;
+			return;
+		}
+		if(nowl <= oldl && nowr <= oldr)
+			return;
+		int mid = (l + r) >> 1;
+		ll nowd = calc(mid , bel) , oldd = calc(mid , id[now]);
+		if(nowl > oldl)
+		{
+			if(oldd >= nowd)
+				change(ls[now] , bel , l , mid);
+			else
+				change(rs[now] , id[now] , mid + 1 , r) , id[now] = bel;
+			return;
+		}
+		else
+		{
+			if(nowd <= oldd)
+				change(rs[now] , bel , mid + 1 , r);
+			else
+				change(ls[now] , id[now] , l , mid) , id[now] = bel;
+			return;
+		}
+	}
+
+	inline void add(const int pos ,  const int id)
+	{
+		for(int i = pos ; i <= m ; i += lowbit(i))
+			change(root[i] , id , 1 , 1e5 + 1);
+	}
+
+	void query(const int now , const int l , const int r , const int pos)
+	{
+		if(!now)
+			return;
+		if(id[now])
+			ans = max(ans , calc(pos , id[now]));
+		int mid = (l + r) >> 1;
+		if(mid >= pos)
+			query(ls[now] , l , mid , pos);
+		else query(rs[now] , mid + 1 , r , pos);
+	}
+
+	inline void get_query(const int pos , const int x)
+	{
+		ans = 0;
+		for(int i = pos ; i ; i -= lowbit(i))
+			query(root[i] , 1 , 1e5 + 1 , x);
+	}
+
+	inline void main()
+	{
+		n = read() , m = read();
+		for(int i = 1 ; i <= n ; ++ i)
+			val[i].resize(m + 5) , buff[i].resize(m + 5) , f[i].resize(m + 5);
+		for(int i = 1 ; i <= n ; ++ i)
+			for(int j = 1 ; j <= m ; ++ j)
+				buff[i][j] = read();
+		for(int i = 1 ; i <= n ; ++ i)
+			for(int j = 1 ; j <= m ; ++ j)
+				val[i][j] = read();
+		seg[ ++ tot] = node(0 , 0);
+		add(1 , tot);
+		for(int i = 1 ; i <= n ; ++ i)
+			for(int j = 1 ; j <= m ; ++ j)
+			{
+				if(i == 1 && j == 1)	continue;
+				get_query(j , i + j);
+				f[i][j] = ans + val[i][j] , seg[ ++ tot] = node(buff[i][j] , f[i][j] - (i + j) * buff[i][j]);
+				add(j , tot);
+			}
+		printf("%lld\n" , f[n][m]);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
