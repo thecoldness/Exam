@@ -1,0 +1,135 @@
+#include <cstdio>
+#include <cctype>
+#include <algorithm>
+#include <cstring>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 2e5 + 5;
+	const int MOD = 998244353;
+
+	struct node
+	{
+		ll nex , to , pi;
+		node(ll a , ll b , ll c)
+		{
+			nex = a , to = b , pi = c;
+		}
+		node(){}
+	}edge[Max_n * 2];
+
+	int head[Max_n] , tot , n , a[Max_n] , d[Max_n] , st[Max_n] , tp;
+
+	ll val[Max_n] , s[Max_n] , g[Max_n] , ans[Max_n];
+
+	inline void add_edge(const int x , const int y , const int z)
+	{
+		edge[ ++ tot] = node(head[x] , y , z) , head[x] = tot;
+		edge[ ++ tot] = node(head[y] , x , z) , head[y] = tot;
+	}
+
+	void dfs_build(const int now , const int from)
+	{
+		if(tp - d[now] >= 1)
+			val[st[tp - d[now]]] -= a[now] , val[st[tp - d[now]]] %= MOD;
+		val[now] += a[now] , val[now] %= MOD;
+		st[ ++ tp] = now;
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			if(nex == from)	continue;
+			dfs_build(nex , now);
+		}
+		-- tp;
+	}
+
+	void dfs_ans(const int now , const int from)
+	{
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			if(nex == from)	continue;
+			dfs_ans(nex , now);
+			val[now] += val[nex] , val[now] %= MOD;
+		}
+	}
+
+	void dfs_dp(const int now , const int from)
+	{
+		s[now] = val[now] , g[now] = val[now] * val[now] % MOD;
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			if(nex == from)	continue;
+			dfs_dp(nex , now);
+			g[now] += edge[i].pi * ((g[nex] + 2 * s[now] * s[nex] % MOD) % MOD) % MOD , g[now] %= MOD;
+			s[now] += edge[i].pi * s[nex] % MOD , s[now] %= MOD;
+		}
+	}
+
+	void dfs_change(const int now , const int from)
+	{
+		ans[now] = g[now];
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			if(nex == from)	continue;
+			s[now] -= edge[i].pi * s[nex] % MOD , s[now] %= MOD;
+			g[now] -= edge[i].pi * ((g[nex] + 2 * s[now] * s[nex] % MOD) % MOD) % MOD , g[now] %= MOD;
+			g[nex] += edge[i].pi * ((g[now] + 2 * s[nex] * s[now] % MOD) % MOD) % MOD , g[nex] %= MOD;
+			s[nex] += edge[i].pi * s[now] % MOD , s[nex] %= MOD;
+			dfs_change(nex , now);
+			s[nex] -= edge[i].pi * s[now] % MOD , s[nex] %= MOD;
+			g[nex] -= edge[i].pi * ((g[now] + 2 * s[nex] * s[now] % MOD) % MOD) % MOD , g[nex] %= MOD;
+			g[now] += edge[i].pi * ((g[nex] + 2 * s[now] * s[nex] % MOD) % MOD) % MOD , g[now] %= MOD;
+			s[now] += edge[i].pi * s[nex] % MOD , s[now] %= MOD;
+		}
+	}
+
+	inline void main()
+	{
+		n = read();
+		for(int i = 1 ; i <= n ; ++ i)
+			a[i] = read() , d[i] = read();
+		for(int i = 1 ; i < n ; ++ i)
+		{
+			int ui = read() , vi = read() , pi = read();
+			add_edge(ui , vi , pi);
+		}
+		dfs_build(1 , 0);
+		dfs_ans(1 , 0);
+		dfs_dp(1 , 0);
+		dfs_change(1 , 0);
+		int m = read();
+		while(m --)
+			printf("%lld\n" , (ans[read()] + MOD) % MOD);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
