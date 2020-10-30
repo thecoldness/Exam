@@ -1,0 +1,157 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <cstring>
+#include <vector>
+#include <cctype>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int Max_s = 1e4 + 5;
+	const int Max_t = 1e5 + 5;
+	const int M = 998244353;
+
+	char s[Max_s] , c[Max_t];
+
+	vector<int> v[30];
+
+	ll tim;
+
+	int n , len , cnt[30];
+
+	int f[30][Max_s];
+
+	inline int find(const int x , const int y)
+	{
+		if(f[x][y])
+			return f[x][y];
+		int pos = upper_bound(v[x].begin() , v[x].end() , y) - v[x].begin();
+		return f[x][y] = v[x][pos];
+	}
+
+	inline void solve()// now stands for where you are
+	{
+		memset(c , 0 , sizeof(c));
+		scanf("%s" , c + 1);
+		int l = strlen(c + 1) , now = 0;
+		ll ans = 0;
+		for(int i = 1 ; i <= l ; ++ i)
+		{
+			if(isdigit(c[i]))
+				continue;
+			if(c[i] != '*' && !cnt[c[i] - 'a'])
+			{
+				printf("-1\n");
+				return;
+			}
+			if(!isdigit(c[i + 1]))
+			{
+				if(c[i] == '*')
+				{
+					++ now;
+					if(now > len)
+						now = 1 , ans += len , ans %= M;
+					continue;
+				}
+				int ch = c[i] - 'a';
+				now = find(ch , now);
+				if(now > len)
+					ans += len , ans %= M , now = v[ch][0];
+			}
+			else
+			{
+				if(c[i] == '*')
+				{
+					ll MOD = len , beg = 1 , res = 0 , cir = 0;
+					while(i + beg <= l && isdigit(c[i + beg]))
+					{
+						res = res * 10 + (c[i + beg] ^ 48);
+						cir = cir * 10 + res / MOD;
+						res %= MOD , cir %= M;
+						++ beg;
+					}
+					now += res , ans += cir * len % M , ans %= M;
+					if(now > len)
+						now -= len , ans += len , ans %= M;
+				}
+				else
+				{
+					ll ch = c[i] - 'a' , beg = 1 , res = 0 , cir = 0 , MOD = cnt[ch];
+					while(i + beg <= l && isdigit(c[i + beg]))
+					{
+						res = res * 10 + (c[i + beg] ^ 48);
+						cir = cir * 10 + res / MOD;
+						res %= MOD , cir %= M;
+						++ beg;
+					}
+					-- res;
+					if(res < 0)
+						-- cir , res += MOD;
+					ans += cir * len % M , ans %= M;
+					for(int i = 1 ; i <= res + 1 ; ++ i)
+					{
+						now = find(ch , now);
+						if(now > len)
+							now = v[ch][0] , ans += len , ans %= M;
+					}
+				}
+			}
+		}
+		printf("%lld\n" , (ans + now + M) % M);
+	}
+
+	inline void main()
+	{
+		scanf("%s" , s + 1);
+		len = strlen(s + 1);
+		for(int i = 1 ; i <= len ; ++ i)
+		{
+			int ch = s[i] - 'a';
+			++ cnt[ch];
+			v[ch].push_back(i);
+		}
+		for(int i = 0 ; i < 26 ; ++ i)
+			v[i].push_back(Max_s);
+		n = read();
+		while(n --)
+			solve();
+	}
+}
+
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
+/*
+addbaaecda
+5
+e*b
+d*
+c*6*d*e
+b**1e18*4d
+d5b
+*/
