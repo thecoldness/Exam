@@ -1,0 +1,146 @@
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <vector>
+#include <algorithm>
+#include <queue>
+#include <climits>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	struct God
+	{
+		int bel , li , ri , id;//id is the subscript of the bel in vector
+		God(int a , int b , int c , int d)
+		{
+			bel = a , li = b , ri = c , id = d;
+		}
+		God(){}
+		bool operator < (const God & a)const
+		{
+			return li > a.li;
+		}
+	};
+
+	priority_queue<God> zzz;
+
+	const int Max_n = 1e5 + 5;
+
+	vector<bool> vis[Max_n];
+
+	struct node
+	{
+		int li , ri;
+		node(int a , int b)
+		{
+			li = a , ri = b;
+		}
+		node(){}
+		bool operator < (const node &a)const
+		{
+			return li < a.li;
+		}
+	};
+
+	vector<node> v[Max_n] , cant[Max_n];
+
+	int n , m;
+
+	inline void push(const int nex , const int li , const int ri)
+	{
+		int pos = lower_bound(v[nex].begin() , v[nex].end() , node(li , 0)) - v[nex].begin() - 1;
+		if(pos >= 0)
+		{
+			if(v[nex][pos].li > ri + 1 || v[nex][pos].ri <= li);
+			else zzz.push(God(nex , max(li + 1 , v[nex][pos].li) , v[nex][pos].ri , pos));
+		}
+		++ pos;
+		int sz = v[nex].size();
+		while(pos < sz)
+		{
+			if(v[nex][pos].li > ri + 1 || v[nex][pos].ri <= li)
+				break;
+			zzz.push(God(nex , max(li + 1 , v[nex][pos].li) , v[nex][pos].ri , pos));
+			++ pos;
+		}
+	}
+
+	inline void MSR()
+	{
+		zzz.push(God(0 , 0 , INT_MAX - Max_n , 0));
+		while(!zzz.empty())
+		{
+			int now = zzz.top().bel , posl = zzz.top().li , posr = zzz.top().ri , pos = zzz.top().id;
+			zzz.pop();
+			if(vis[now][pos])
+				continue;
+			if(now == n + 1)
+			{
+				printf("%d\n" , posl);
+				exit(0);
+			}
+			vis[now][pos] = true;
+			push(now + 1 , posl , posr);
+			if(now >= 1)
+				push(now - 1 , posl , posr);
+		}
+	}
+
+	inline void main()
+	{
+		n = read() , m = read();
+		for(int i = 1 ; i <= m ; ++ i)
+		{
+			int ui = read() , l = read() , r = read();
+			cant[ui].push_back(node(l , r));
+		}
+		for(int i = 1 ; i <= n ; ++ i)
+			sort(cant[i].begin() , cant[i].end());
+		vis[0].resize(10);
+		vis[n + 1].resize(5);
+		v[n + 1].push_back(node(0 , INT_MAX - Max_n));
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			int sz = cant[i].size();
+			vis[i].resize(sz + 5);
+			if(!sz)
+			{
+				v[i].push_back(node(1 , INT_MAX - Max_n));
+				continue;
+			}
+			if(cant[i][0].li > 1)
+				v[i].push_back(node(1 , cant[i][0].li - 1));
+			for(int j = 1 ; j < sz ; ++ j)
+				v[i].push_back(node(cant[i][j - 1].ri + 1 , cant[i][j].li - 1));
+			v[i].push_back(node(cant[i][sz - 1].ri + 1 , INT_MAX - Max_n));
+		}
+		MSR();
+	}
+}
+
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
