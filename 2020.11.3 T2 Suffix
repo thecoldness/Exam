@@ -1,0 +1,121 @@
+#include <cstdio>
+#include <cctype>
+#include <algorithm>
+#include <cstring>
+#include <climits>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 1e6 + 5;
+
+	int rtp , tp , n , head[Max_n] , tot , dep[Max_n];
+	int a[Max_n] , ans[Max_n] , logm[Max_n] , st[Max_n * 2];
+
+	struct Node
+	{
+		int nex , to;
+		Node(int a , int b)
+		{
+			nex = a , to = b;
+		}
+		Node(){}
+	}edge[Max_n * 2];
+
+	inline void add_edge(const int x , const int y)
+	{
+		edge[ ++ tot] = Node(head[x] , y);
+		head[x] = tot;
+	}
+
+	void dfs(const int now)
+	{
+		int l = 1 , r = tp , tmp = 0;
+		while(l <= r)
+		{
+			int mid = (l + r) >> 1;
+			if(a[st[mid]] >= a[now])
+				tmp = mid , l = mid + 1;
+			else r = mid - 1;
+		}
+		int c_tp = tp , c_pos = st[tmp + 1];
+		tp = tmp;
+		st[ ++ tp] = now;
+		ans[now] = tp;
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			dfs(nex);
+		}
+		tp = c_tp , st[tmp + 1] = c_pos;
+	}
+
+/*	void dfs(const int now , const int from)
+	{
+		fa[now][0] = from , f[now][0] = a[from];
+		dep[now] = dep[from] + 1;
+		for(int j = 1 ; j <= 20; ++ j)
+		{
+			fa[now][j] = fa[fa[now][j - 1]][j - 1];
+			f[now][j] = max(f[now][j - 1] , f[fa[now][j - 1]][j - 1]);			
+		}
+
+		int pos = now;
+		for(int j = 20; j >= 0 ; -- j)
+			if(f[pos][j] < a[now])
+				pos = fa[pos][j];
+		pos = fa[pos][0];
+		ans[now] = ans[pos] + 1;
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			dfs(nex , now);
+		}
+	}*/ // MLE
+
+	inline void file()
+	{
+		freopen("suffix.in" , "r" , stdin);
+		freopen("suffix.out" , "w" , stdout);
+	}
+
+	inline void main()
+	{
+		// file();
+		n = read();
+		for(int i = 2 ; i <= n ; ++ i)
+			logm[i] = logm[i / 2] + 1;
+		for(int i = 2 ; i <= n ; ++ i)
+			add_edge(read() , i);
+		for(int i = 1 ; i <= n ; ++ i)
+			a[i] = read();
+		dfs(1);
+		for(int i = 1 ; i <= n ; ++ i)
+			printf("%d " , ans[i]);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
