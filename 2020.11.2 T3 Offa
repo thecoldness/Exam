@@ -1,0 +1,81 @@
+#include <cstdio>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+#include <climits>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 5e6 + 5;
+	
+	int n , a[Max_n] , p[Max_n] , m , b[Max_n];
+	int group[Max_n] , pos[Max_n];
+	
+	ll sum[Max_n] , low[Max_n] , f[Max_n] , g[Max_n];
+	
+	inline void main()
+	{
+		n = read();
+		for(int i = 1 ; i <= n ; ++ i)
+			a[i] = read();
+		for(int i = 1 ; i <= n ; ++ i)
+			p[i] = read();
+		m = read();
+		for(int i = 1 ; i <= m ; ++ i)
+			b[i] = read() , pos[b[i]] = i;
+		++ n;
+		a[n] = n , b[ ++ m] = n , pos[n] = m;
+		for(int i = 1 ; i <= n ; ++ i)
+			f[i] = g[i] = LLONG_MAX >> 1;
+		int now = 1;
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			while(b[now] < i)
+				++ now;
+			group[i] = now;
+		}
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			int bel = pos[a[i]];
+			if(bel)
+				if(g[bel - 1] != (LLONG_MAX >> 1))
+					f[i] = g[bel - 1] + sum[bel] + low[i - 1];
+			low[i] = low[i - 1];
+			if(p[i] >= 0)
+				sum[group[a[i]]] += p[i];
+			else low[i] += p[i];
+			g[bel] = min(g[bel] , f[i] - low[i]);
+		}
+		if(f[n] == (LLONG_MAX >> 1))
+			puts("Impossible");
+		else printf("%lld\n" , f[n]);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
