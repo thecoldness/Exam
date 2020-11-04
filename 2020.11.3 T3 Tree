@@ -1,0 +1,242 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <cctype>
+#include <climits>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 1e5 + 5;
+
+	struct node
+	{
+		int l , r , down , up;
+		node(int a , int b)
+		{
+			l = a , r = b , down = up = INT_MAX >> 1;
+		}
+		node(){}
+	}tree[Max_n << 2];
+
+	struct Node
+	{
+		int nex , to;
+		Node(int a , int b)
+		{
+			nex = a , to = b;
+		}
+		Node(){}
+	}edge[Max_n * 2];
+
+	int tot , head[Max_n] , n , dfn[Max_n] , tim , siz[Max_n] , tp , son[Max_n];
+	int top[Max_n] , fa[Max_n] , dep[Max_n] , tail[Max_n] , st[Max_n * 20] , m;
+
+	inline void add_edge(const int x , const int y)
+	{
+		edge[ ++ tot] = Node(head[x] , y) , head[x] = tot;
+		edge[ ++ tot] = Node(head[y] , x) , head[y] = tot;
+	}
+
+	void dfs_son(const int now , const int from)
+	{
+		siz[now] = 1 , dep[now] = dep[from] + 1 , fa[now] = from;
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			if(nex == from)
+				continue;
+			dfs_son(nex , now);
+			if(siz[nex] > siz[son[now]])
+				son[now] = nex;
+		}
+	}
+
+	void dfs_chain(const int now , const int tp , const int from)
+	{
+		dfn[now] = ++ tim , top[now] = tp;
+		if(!son[now])
+			return;
+		dfs_chain(son[now] , tp , now);
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			if(nex == from || nex == son[now])
+				continue;
+			dfs_chain(nex , nex , now);
+		}
+	}
+
+	void build(const int l , const int r , const int tr)
+	{
+		tree[tr] = node(l , r);
+		if(l == r)
+			return;
+		int mid = (l + r) >> 1;
+		build(l , mid , tr * 2);
+		build(mid + 1 , r , tr * 2 + 1);
+	}
+
+	int dfs_tail(const int now , const int from)
+	{
+		if(!son[now])
+			return tail[now] = now;	
+		tail[now] = dfs_tail(son[now] , now);
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			if(nex == from || nex == son[now])
+				continue;
+			dfs_tail(nex , now);
+		}
+		return tail[now];
+	}
+
+	inline void push_up(const int tr)
+	{
+		tree[tr].down = min(tree[tr * 2].down , tree[tr * 2 + 1].down);
+		tree[tr].up = min(tree[tr * 2].up , tree[tr * 2 + 1].up);
+	}
+
+	void change_down(const int l , const int r , const int tr , const int val)
+	{
+		int ll = tree[tr].l , rr = tree[tr].r;
+		if(ll > r || rr < l)
+			return;
+		if(l <= ll && rr <= r)
+		{
+			tree[tr].down = min(tree[tr].down , val);
+			return;
+		}
+		change_down(l , r , tr * 2 , val);
+		change_down(l , r , tr * 2 + 1 , val);
+		push_up(tr);
+	}
+
+	void change_up(const int l , const int r , const int tr , const int val)
+	{
+		int ll = tree[tr].l , rr = tree[tr].r;
+		if(ll > r || rr < l)
+			return;
+		if(l <= ll && rr <= r)
+		{
+			tree[tr].up = min(tree[tr].up , val);
+			return;
+		}
+		change_up(l , r , tr * 2 , val);
+		change_up(l , r , tr * 2 + 1 , val);
+		push_up(tr);
+	}
+
+	void rebuild(const int l , const int r , const int tr)
+	{
+		int ll = tree[tr].l , rr = tree[tr].r;
+		if(ll > r || rr < l)
+			return;
+		if(l <= ll && rr <= r)
+		{
+			tree[tr].up = tree[tr].down = INT_MAX >> 1;
+			return;
+		}
+		rebuild(l , r , tr * 2);
+		rebuild(l , r , tr * 2 + 1);
+		push_up(tr);
+	}
+
+	int query_down(const int l , const int r , const int tr)
+	{
+		int ll = tree[tr].l , rr = tree[tr].r;
+		if(ll > r || rr < l)
+			return INT_MAX;
+		if(l <= ll && rr <= r)
+			return tree[tr].down;
+		return min(query_down(l , r , tr * 2) , query_down(l , r , tr * 2 + 1));
+	}
+
+	int query_up(const int l , const int r , const int tr)
+	{
+		int ll = tree[tr].l , rr = tree[tr].r;
+		if(ll > r || rr < l)
+			return INT_MAX;
+		if(l <= ll && rr <= r)
+			return tree[tr].up;
+		return min(query_up(l , r , tr * 2) , query_up(l , r , tr * 2 + 1));
+	}
+
+	inline void recover()
+	{
+		while(tp)
+			rebuild(dfn[st[tp]] , dfn[st[tp]] , 1) , -- tp;
+	}
+
+	inline void main()
+	{
+		n = read() , m = read();
+		for(int i = 1 ; i < n ; ++ i)
+			add_edge(read() , read());
+		dfs_son(1 , 0);
+		dfs_chain(1 , 1 , 0);
+		dfs_tail(1 , 0);
+		build(1 , n , 1);
+		for(int i = 1 ; i <= m ; ++ i)
+		{
+			int opt = read() , x = read();
+			int now = x;
+			if(opt == 1)
+				while(now != 0)
+				{
+					change_down(dfn[now] , dfn[now] , 1 , i + dep[x] - dep[tail[now]]);
+					change_up(dfn[now] , dfn[now] , 1 , i + dep[x] - 2 * dep[now] + dep[top[now]]);
+					st[ ++ tp] = now;
+					now = fa[top[now]];
+				}
+			if(opt == 2)
+				recover();
+			if(opt == 3)
+			{
+				bool find = false;
+				while(now != 0)
+				{
+					int ret = query_down(dfn[now] , dfn[tail[now]] , 1);
+					if(ret + dep[tail[now]] - dep[now] + dep[x] - dep[now] <= i)
+						find = true;
+					ret = query_up(dfn[top[now]] , dfn[now] , 1);
+					if(ret + dep[now] - dep[top[now]] + dep[x] - dep[now] <= i)
+						find = true;
+					if(find)
+						break;
+					now = fa[top[now]];
+				}
+				if(find)
+					puts("wrxcsd");
+				else puts("orzFsYo");		
+			}
+		}
+	}
+}
+
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
