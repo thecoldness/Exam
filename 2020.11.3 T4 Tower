@@ -1,0 +1,276 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <algorithm>
+#include <set>
+#include <cmath>
+#include <vector>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+
+	inline ll read()
+	{
+		ll res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 1e5 + 5;
+
+	int fa[Max_n] , nex[Max_n] , lst[Max_n] , b[Max_n] , s_tot , s_head[Max_n];
+	int c[Max_n] , w[Max_n] , v[Max_n] , p[Max_n] , tree_fa[Max_n] , n;
+
+	ll wx , vx , px , sb[Max_n] , sc[Max_n];
+
+	bool vis[Max_n];
+
+	int find(const int x)
+	{
+		return fa[x] == x ? x : fa[x] = find(fa[x]);
+	}
+
+	inline void merge(const int x , const int y)
+	{
+		int fx = find(x) , fy = find(y);
+		if(fx == fy)	return;
+		nex[lst[fx]] = fy;
+		lst[fx] = lst[fy];
+		fa[fy] = fx;
+	}
+
+	struct God
+	{
+		ll bi , ci , id;
+		God(ll a , ll b , ll c)
+		{
+			sb[c] = bi = a , sc[c] = ci = b , id = c;
+		}
+		God(){}
+		bool operator < (const God &a)const
+		{
+			//return (ll)bi * (a.ci - 1) < (ll)a.bi * (ci - 1); bug
+			return bi * a.ci < a.bi * ci || ((bi * a.ci == a.bi * ci) && id < a.id);
+		}
+	}dot[Max_n];
+
+	set<God> s;
+
+	typedef set<God>::iterator iter;
+
+	// vector<God> ve[Max_n];
+
+	God operator + (God a , God b)
+	{
+		//return God(a.bi + a.bi , a.ci + b.ci , a.id); bug
+		return God(a.bi + b.bi , a.ci + b.ci , a.id);
+	}
+
+	// priority_queue<God> zzz;
+
+	struct node
+	{
+		int nex , to;
+		node(int a , int b)
+		{
+			nex = a , to = b;
+		}
+		node(){}
+	}edge[Max_n * 2] , s_edge[Max_n * 2];
+
+	int head[Max_n] , tot;
+
+	inline void add_edge(const int x , const int y)
+	{
+		edge[ ++ tot] = node(head[x] , y) , head[x] = tot;
+		edge[ ++ tot] = node(head[y] , x) , head[y] = tot;
+	}
+
+	void dfs(const int now , const int from)
+	{
+		tree_fa[now] = from;
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			if(nex == from)	continue;
+			dfs(nex , now);
+			// if(dot[now] < dot[nex])// bug : <
+			// {
+			// 	merge(now , nex);
+			// 	dot[now] = dot[now] + dot[nex];
+			// }
+			// ve[now].push_back(dot[nex]);
+		}
+		// sort(ve[now].begin() , ve[now].end());
+		// reverse(ve[now].begin() , ve[now].end());
+		// int sz = ve[now].size();
+		// for(int i = 0 ; i < sz ; ++ i)
+		// 	//if(dot[now] < ve[now][i]) bug
+		// 	if(!(ve[now][i] < dot[now]))
+		// 	{
+		// 		merge(now , ve[now][i].id);
+		// 		dot[now] = dot[now] + ve[now][i];
+		// 	}
+	}
+
+	// inline void s_add_edge(const int x , const int y)
+	// {
+	// 	s_edge[ ++ s_tot] = node(s_head[x] , y);
+	// 	s_head[x] = s_tot;
+	// }
+
+	// struct Node
+	// {
+	// 	int from , to;
+	// 	Node(int a , int b)
+	// 	{
+	// 		from = a , to = b;
+	// 	}
+	// 	Node(){}
+	// }se[Max_n];
+
+	// inline bool cmp(Node a , Node b)
+	// {
+	// 	if(a.from == b.from)
+	// 		return a.to < b.to;
+	// 	return a.from < b.from;
+	// }
+
+	inline void main()
+	{
+		n = read();
+		for(int i = 1 ; i < n ; ++ i)
+			add_edge(read() , read());
+		wx = read() , vx = read() , px = read();
+		fa[1] = lst[1] = 1;
+		dot[1] = God(0 , 0 , 1);// bug
+		for(int i = 2 ; i <= n ; ++ i)
+		{
+			fa[i] = lst[i] = i;
+			w[i] = read() , v[i] = read() , p[i] = read() , b[i] = read();
+			c[i] = (int)ceil((double)w[i] / (vx - p[i])) - 1;
+			dot[i] = God(b[i] , c[i] , i);
+			s.insert(God(b[i] , c[i] , i));
+		}
+		dfs(1 , 0);
+		vis[1] = true;
+		while(!s.empty())
+		{
+			iter it = s.end();
+			-- it;
+			int now = (*it).id;
+			if(vis[find(tree_fa[now])])
+			{
+				int tmp = find(now);
+				while(tmp)
+					wx -= 1ll * c[tmp] * (v[tmp] - px) , px += b[tmp] , tmp = nex[tmp];
+				s.erase(it);
+				vis[find(now)] = true;
+			}
+			else
+			{
+				God tmp1 = *it;
+				s.erase(it);
+				it = s.find(God(sb[find(tree_fa[now])] , sc[find(tree_fa[now])] , find(tree_fa[now])));
+				God tmp2 = *it;
+				s.erase(it);
+				s.insert(tmp2 + tmp1);
+				merge(find(tmp2.id) , find(tmp1.id));
+			}
+		}
+		// for(int i = head[1] ; i ; i = edge[i].nex)
+		// {
+		// 	int nex = edge[i].to;
+		// 	dfs(nex , 1);
+		// }
+		// int se_tot = 0;
+		// for(int i = 2 ; i <= n ; ++ i)
+		// 	if(find(tree_fa[i]) != find(i))
+		// 		se[ ++ se_tot] = Node(find(tree_fa[i]) , find(i));
+		// sort(se + 1 , se + se_tot + 1 , cmp);
+// 		for(int i = 1 ; i <= se_tot ; ++ i)
+// 		{
+// 			if(se[i].from == se[i - 1].from && se[i].to == se[i - 1].to)
+// 				continue;
+// 			s_add_edge(se[i].from , se[i].to);
+// 		}
+// 		for(int i = s_head[1] ; i ; i = s_edge[i].nex)
+// 		{
+// 			int nex = s_edge[i].to;
+// 			zzz.push(dot[nex]);
+// 		}
+// 		while(!zzz.empty())
+// 		{
+// 			int now = zzz.top().id;
+// 			int tmp = now;
+// 			zzz.pop();
+// 			while(tmp)
+// 				wx -= 1ll * (c[tmp]) * (v[tmp] - px) , px += b[tmp] , tmp = nex[tmp];
+// 			for(int i = s_head[now] ; i ; i = s_edge[i].nex)
+// 			{
+// 				int nex = s_edge[i].to;
+// 				zzz.push(dot[nex]);
+// 			}
+// 		}
+		if(wx <= 0)
+			puts("-1");
+		else printf("%lld\n" , wx);
+	}
+}
+
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
+/*
+4
+1 2
+1 3
+3 4
+7400 10 0
+43 52 6 1
+79 58 3 1
+97 64 2 3
+
+5526
+
+4
+1 2
+2 3
+2 4
+7500 20 0
+47 92 4 3
+25 83 5 4
+16 50 7 2
+
+7193
+
+5
+1 2
+2 3
+1 4
+3 5
+6200 80 0
+88 54 7 1
+24 87 8 3
+91 77 8 5
+47 73 4 3
+
+6076
+*/
