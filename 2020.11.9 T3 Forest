@@ -1,0 +1,242 @@
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <algorithm>
+#include <cmath>
+#include <climits>
+#include <queue>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 2e3 + 5;
+
+	int n , m , bx , by , q[Max_n] , head , tail;
+	int tot , dx[4] = {0 , 0 , 1 , -1} , dy[4] = {1 , -1 , 0 , 0};
+	int sx[8] = {0 , 0 , 1 , -1 , 1 , -1 , 1 , -1};
+	int sy[8] = {1 , -1 , 0 , 0 , 1 , 1 , -1 , -1};
+	int beg , ed , lenup , lendown , dis[Max_n][Max_n];
+
+	char c[Max_n][Max_n] , cpy[Max_n][Max_n];
+
+	bool vis[Max_n][Max_n];
+
+	struct God
+	{
+		int xi , yi , dis;
+		God(int a , int b , int c)
+		{
+			xi = a , yi = b , dis = c;
+		}
+		God(){}
+	};
+
+	queue<God> zzz;
+
+	void bfs()
+	{
+		// if(nowx <= 0 || nowx > n || nowy <= 0 || nowy > m)
+		// 	return;
+		// if(vis[nowx][nowy] || c[nowx][nowy] == 'X')
+		// 	return;
+		// dis[nowx][nowy] = d , vis[nowx][nowy] = true;
+		// for(int i = 0 ; i < 8 ; ++ i)
+		// 	bfs(nowx + sx[i] , nowy + sy[i] , d + 1);
+		zzz.push(God(bx , by , 0));
+		while(!zzz.empty())
+		{
+			int nowx = zzz.front().xi , nowy = zzz.front().yi;
+			int de = zzz.front().dis;
+			zzz.pop();
+			if(nowx <= 0 || nowx > n || nowy <= 0 || nowy > m)
+				continue;
+			if(vis[nowx][nowy] || c[nowx][nowy] == 'X')
+				continue;
+			dis[nowx][nowy] = de , vis[nowx][nowy] = true;
+			for(int i = 0 ; i < 8 ; ++ i)
+				zzz.push(God(nowx + sx[i] , nowy + sy[i] , de + 1));
+		}
+	}
+
+	struct node
+	{
+		int xi , yi;
+		node(int a , int b)
+		{
+			xi = a , yi = b;
+		}
+		node(){}
+	}dot[Max_n * Max_n << 2] , up[Max_n] , down[Max_n];
+
+	inline bool cmp1(node a , node b)
+	{
+		if(a.xi != b.xi)
+			return a.xi < b.xi;
+		return a.yi > b.yi;
+	}
+
+	inline int cross(node a , node b)
+	{
+		return a.xi * b.yi - a.yi * b.xi;
+	}
+
+	node operator - (node a , node b)
+	{
+		return node(b.xi - a.xi , b.yi - a.yi);
+	}
+
+	inline bool cmp2(node a , node b)
+	{
+		if(a.xi != b.xi)
+			return a.xi < b.xi;
+		return a.yi < b.yi;
+	}
+
+	inline bool check()
+	{
+		for(int i = 1 ; i <= lenup ; ++ i)
+			if(up[i].xi == bx && up[i].yi == by)
+				return true;
+		for(int i = 1 ; i <= lendown ; ++ i)
+			if(down[i].xi == bx && down[i].yi == by)
+				return true;
+		return false;
+	}
+
+	inline int dist(node a , node b)
+	{
+		return max(abs(a.xi - b.xi) , abs(a.yi - b.yi));
+	}
+
+	inline void main()
+	{
+		n = read() , m = read();
+		for(int i = 1 ; i <= n ; ++ i)
+			scanf("%s" , c[i] + 1);
+		memcpy(cpy , c , sizeof(c));
+		// for(int i = 1 ; i <= n ; ++ i) 
+		// 	for(int j = 1 ; j <= m ; ++ j) bug
+				// c[i][j] = cpy[n - i + 1][j]; bug
+		for(int i = 1 ; i <= m ; ++ i)
+			for(int j = 1 ; j <= n ; ++ j)
+				c[i][j] = cpy[n - j + 1][i];
+		// for(int i = 1 ; i <= n ; ++ i)
+		// 	for(int j = 1 ; j <= m ; ++ j) bug
+		for(int i = 1 ; i <= m ; ++ i)
+			for(int j = 1 ; j <= n ; ++ j)
+			{
+				if(c[i][j] == '*')
+					bx = i , by = j;
+				if(c[i][j] == 'X')
+					for(int k = 0 ; k < 4 ; ++ k)
+						dot[ ++ tot] = node(i + dx[k] , j + dy[k]);
+			}
+		dot[ ++ tot] = node(bx , by);
+		sort(dot + 1 , dot + tot + 1 , cmp1);
+		beg = dot[1].yi , ed = dot[tot].yi;
+		head = 1;
+		for(int i = 1 ; i <= tot ; ++ i)
+		{
+			if(dot[i].xi == dot[i - 1].xi)
+				continue;
+			while(head < tail && cross(dot[q[tail - 1]] - dot[q[tail]] , dot[q[tail]] - dot[i]) >= 0)
+				-- tail;
+			q[ ++ tail] = i;
+		}
+		for(int i = head ; i <= tail ; ++ i)
+			up[i] = dot[q[i]];
+		lenup = tail;
+		head = 1 , tail = 0;
+		sort(dot + 1 , dot + tot + 1 , cmp2);
+		beg -= dot[1].yi , ed = dot[tot].yi - ed;
+		for(int i = 1 ; i <= tot ; ++ i)
+		{
+			if(dot[i].xi == dot[i - 1].xi)
+				continue;
+			while(head < tail && cross(dot[q[tail - 1]] - dot[q[tail]] , dot[q[tail]] - dot[i]) <= 0)
+				-- tail;
+			q[ ++ tail] = i;
+		}
+		for(int i = head ; i <= tail ; ++ i)
+			down[i] = dot[q[i]];
+		lendown = tail;
+		int ans = 0;
+		for(int i = 1 ; i < lenup ; ++ i)
+			ans += dist(up[i] , up[i + 1]);
+		for(int i = 1 ; i < lendown ; ++ i)
+			ans += dist(down[i] , down[i + 1]);
+		ans += beg + ed;	
+		if(check())
+		{
+			printf("%d\n" , ans);
+			return;
+		}
+		else
+		{
+			bfs();
+			int realans = INT_MAX;
+			for(int i = 1 ; i < lenup ; ++ i)
+			{
+				int tmp = ans - dist(up[i] , up[i + 1]);
+				tmp += dis[up[i].xi][up[i].yi] + dis[up[i + 1].xi][up[i + 1].yi];
+				realans = min(realans , tmp);
+			}
+			for(int i = 1 ; i < lendown ; ++ i)
+			{
+				int tmp = ans - dist(down[i] , down[i + 1]);
+				tmp += dis[down[i].xi][down[i].yi] + dis[down[i + 1].xi][down[i + 1].yi];
+				realans = min(realans , tmp);
+			}
+			if(beg)
+			{
+				int tmp = ans - beg;
+				tmp += dis[down[1].xi][down[1].yi] + dis[up[1].xi][up[1].yi];
+				realans = min(tmp , realans);
+			}
+			if(ed)
+			{
+				int tmp = ans - ed;
+				tmp += dis[down[lendown].xi][down[lendown].yi] + dis[up[lenup].xi][up[lenup].yi];
+				realans = min(realans , tmp);
+			}
+			printf("%d\n" , realans);
+		}
+	}
+}
+
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
+/*
+5 5
+.....
+.XXX.
+.X*..
+.XXX.
+.....
+
+14
+
+*/
