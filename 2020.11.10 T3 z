@@ -1,0 +1,148 @@
+#include <cstring>
+#include <cctype>
+#include <algorithm>
+#include <cstdio>
+#include <chrono>
+#include <random>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	mt19937 rnd;
+
+	const int Max_q = 1e5 + 5;
+	const int Max_n = 2e3 + 5;
+
+	inline ll getr(const ll l , const ll r)
+	{
+		uniform_int_distribution<ll> dis(l , r);
+		return dis(rnd);
+	}
+
+	struct node
+	{
+		int lx , ly , rx , ry;
+		node(int a , int b , int c , int d)
+		{
+			lx = a , ly = b , rx = c , ry = d;
+		}
+		node(){}
+		bool operator < (const node &a)const
+		{
+			if(lx != a.lx)
+				return lx < a.lx;
+			if(ly != a.ly)
+				return ly < a.ly;
+			if(rx != a.rx)
+				return rx < a.rx;
+			return ry < a.ry;
+		}
+	}matrix[Max_q];
+
+	struct Node
+	{
+		int lx , ly , rx , ry , opt;
+		Node(int e , int a , int b , int c , int d)
+		{
+			lx = a , ly = b , rx = c , ry = d , opt = e;
+		}
+		Node(){}		
+	}op[Max_q];
+
+	ll tree[Max_n][Max_n];
+
+	int n , m , q , tot;
+
+	ll ha[Max_q];
+
+	inline int lowbit(const int x)
+	{
+		return x & -x;
+	}
+
+	inline node change(Node a)
+	{
+		return node(a.lx , a.ly , a.rx , a.ry);
+	}
+
+	inline void add(const int x , const int y , const ll val)
+	{
+		for(int i = x ; i <= n ; i += lowbit(i))
+			for(int j = y ; j <= m ; j += lowbit(j))
+				tree[i][j] ^= val;
+	}
+
+	inline ll query(const int x , const int y)
+	{
+		ll ret = 0;
+		for(int i = x ; i ; i -= lowbit(i))
+			for(int j = y ; j ; j -= lowbit(j))
+				ret ^= tree[i][j];
+		return ret;
+	}
+
+	inline void get_change(const int pos)
+	{
+		add(matrix[pos].lx , matrix[pos].ly , ha[pos]);
+		add(matrix[pos].lx , matrix[pos].ry + 1 , ha[pos]);
+		add(matrix[pos].rx + 1 , matrix[pos].ly , ha[pos]);
+		add(matrix[pos].rx + 1 , matrix[pos].ry + 1 , ha[pos]);
+	}
+
+	inline void main()
+	{
+		rnd.seed(std::chrono::steady_clock::now().time_since_epoch().count());
+		n = read() , m = read() , q = read();
+		for(int i = 1 ; i <= q ; ++ i)
+		{
+			int ui = read() , vi = read() , ti = read() , qi = read() , mi = read();
+			op[i] = Node(ui , vi , ti , qi , mi);
+			if(ui == 1)
+				matrix[ ++ tot] = node(vi , ti , qi , mi);
+		}
+		sort(matrix + 1 , matrix + tot + 1);
+		for(int i = 1 ; i <= tot ; ++ i)
+			ha[i] = getr(1 , 1e18);
+		for(int i = 1 ; i <= q ; ++ i)
+		{
+			if(op[i].opt == 1 || op[i].opt == 2)
+			{
+				int pos = lower_bound(matrix + 1 , matrix + tot + 1 , change(op[i])) - matrix;
+				get_change(pos);
+			}
+			else
+			{
+				if(query(op[i].lx , op[i].ly) == query(op[i].rx , op[i].ry))
+					puts("Yes");
+				else puts("No");
+			}
+		}
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
