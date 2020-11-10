@@ -1,0 +1,157 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <algorithm>
+#include <map>
+#include <climits>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 1e5 + 5;
+
+	int a[Max_n] , n , pos[Max_n] , tot , logm[Max_n];
+	int l[Max_n] , dp[Max_n] , g[18][Max_n];
+
+	ll f[60];
+
+	map<ll , int> mp;
+
+	inline void build()
+	{
+		for(int i = 1 ; i <= n ; ++ i)
+			g[0][i] = l[i];
+		for(int j = 1 ; j <= logm[n] ; ++ j)
+			for(int i = 1 ; i <= n ; ++ i)
+				if(i + (1 << j) - 1 > n)
+					break;
+				else g[j][i] = max(g[j - 1][i] , g[j - 1][i + (1 << (j - 1))]);
+	}
+
+	inline void pre_work()
+	{
+		f[0] = 1 , f[1] = 1;
+		for(int i = 2 ; i <= 47 ; ++ i)
+			f[i] = f[i - 1] + f[i - 2];
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			l[i] = 1;
+			for(int j = 1 ; j <= 47 ; ++ j)
+			{
+				ll tmp = f[j] - a[i];
+				if(mp.find(tmp) == mp.end())
+					continue;
+				l[i] = max(l[i] , pos[mp[tmp]] + 1);
+			}
+			if(mp.find(a[i]) == mp.end())
+				mp[a[i]] = ++ tot;
+			pos[mp[a[i]]] = i;
+		}
+		for(int i = 2 ; i <= n ; ++ i)
+			logm[i] = logm[i / 2] + 1;
+		build();
+	}
+
+	struct node
+	{
+		int l , r , minn;
+		node(int a , int b)
+		{
+			l = a , r = b , minn = INT_MAX;
+		}
+		node(){}
+	}tree[Max_n << 2];
+
+	inline void push_up(const int tr)
+	{
+		tree[tr].minn = min(tree[tr * 2].minn , tree[tr * 2 + 1].minn);
+	}
+
+	void build(const int l , const int r , const int tr)
+	{
+		tree[tr] = node(l , r);
+		if(l == r)
+			return;
+		int mid = (l + r) >> 1;
+		build(l , mid , tr * 2);
+		build(mid + 1 , r , tr * 2 + 1);
+		push_up(tr);
+	}
+
+	void change(const int pos , const int tr , const int val)
+	{
+		int ll = tree[tr].l , rr = tree[tr].r;
+		if(ll == rr)
+		{
+			tree[tr].minn = val;
+			return;
+		}
+		int mid = (ll + rr) >> 1;
+		if(mid >= pos)
+			change(pos , tr * 2 , val);
+		else change(pos , tr * 2 + 1 , val);
+		push_up(tr);
+	}
+
+	inline int query_max(const int l , const int r)
+	{
+		int len = r - l + 1;
+		return max(g[logm[len]][l] , g[logm[len]][r - (1 << logm[len]) + 1]);
+	}
+
+	int query(const int l , const int r , const int tr)
+	{
+		int ll = tree[tr].l , rr = tree[tr].r;
+		if(ll > r || rr < l)
+			return INT_MAX;
+		if(l <= ll && rr <= r)
+			return tree[tr].minn;
+		return min(query(l , r , tr * 2) , query(l , r , tr * 2 + 1));
+	}
+
+	inline void main()
+	{
+		n = read();
+		for(int i = 1 ; i <= n ; ++ i)
+			a[i] = read();
+		pre_work();
+		build(0 , n , 1);
+		change(0 , 1 , 0);
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			dp[i] = query(query_max(l[i] , i) - 1 , i - 1 , 1) + 1;
+			change(i , 1 , dp[i]);
+		}
+		printf("%d\n" , dp[n]);
+		// for(int i = 1 ; i <= n ; ++ i)
+			// printf("%d " , l[i]);
+	}
+}
+
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
