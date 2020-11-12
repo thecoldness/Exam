@@ -1,0 +1,66 @@
+#include <cstdio>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 405;
+	
+	ll f[Max_n][Max_n];
+	
+	int a[Max_n] , b[Max_n] , c[Max_n] , n , atk;
+	int h[Max_n];
+	
+	inline void main()
+	{
+		n = read();
+		atk = read();
+		for(int i = 1 ; i <= n ; ++ i)
+			a[i] = read() , b[i] = read() , h[i] = read();
+		for(int i = 1 ; i <= n ; ++ i)
+			c[i] = (h[i] + atk - 1) / atk;
+		memset(f , 0x3f , sizeof(f));
+		for(int i = 0 ; i <= n ; ++ i)
+			for(int j = 0 ; j < n ; ++ j)
+				f[i][j] = 0;
+		for(int i = 1 ; i <= n ; ++ i)
+			f[i][i] = c[i] * (a[i] + b[i - 1] + b[i + 1]);
+		for(int len = 2 ; len <= n ; ++ len)
+			for(int l = 1 ; l <= n - len + 1 ; ++ l)
+			{
+				int r = l + len - 1;
+				for(int k = l ; k <= r ; ++ k)
+					f[l][r] = min(f[l][r] , f[l][k - 1] + f[k + 1][r] + c[k] * (a[k] + b[l - 1] + b[r + 1]));
+			}
+		printf("%lld\n" , f[1][n]);
+	}
+}
+
+int main()
+{
+	//freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
