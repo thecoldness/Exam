@@ -1,0 +1,146 @@
+#include <cstdio>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+#include <climits>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 1e3 + 5;
+	const int Max_m = 1e3 + 5;
+	
+	int n , m , hp , mp , sp , dhp , n1 , n2 , die = INT_MAX;
+	int dmp , dsp , x , t , a[Max_n] , val[Max_n];
+	int b[Max_n] , y[Max_n] , c[Max_n] , z[Max_n] , rem;
+	int f[Max_n][Max_n] , g[Max_n] , h[Max_n] , blood[Max_n];
+	
+	inline void clear()
+	{
+		for(int i = 0 ; i <= n ; ++ i)
+			val[i] = g[i] = h[i] = blood[i] = -INT_MAX;
+		die = INT_MAX;
+	}
+	
+	inline void work()
+	{
+		n = read() , m = read() , rem = hp = read() , mp = read();
+		sp = read() , dhp = read() , dmp = read() , dsp = read() , x = read();
+		for(int i = 1 ; i <= n ; ++ i)
+			a[i] = read();
+		clear();
+		n1 = read();
+		for(int i = 1 ; i <= n1 ; ++ i)
+			b[i] = read() , y[i] = read();
+		n2 = read();
+		for(int i = 1 ; i <= n2 ; ++ i)
+			c[i] = read() , z[i] = read();
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			rem = min(dhp + rem , hp);
+			rem -= a[i];
+			if(rem <= 0)
+			{
+				die = i;
+				break;
+			}
+		}
+		for(int i = 0 ; i <= n ; ++ i)
+			for(int j = 0 ; j <= sp ; ++ j)
+				f[i][j] = - INT_MAX;
+		f[0][sp] = 0;
+		for(int i = 0 ; i < n ; ++ i)
+			for(int j = 0 ; j <= sp ; ++ j)
+			{
+				f[i + 1][min(j + dsp , sp)] = max(f[i + 1][min(j + dsp , sp)] , f[i][j] + x);
+				for(int k = 1 ; k <= n2 ; ++ k)
+					if(j - c[k] >= 0)
+						f[i + 1][j - c[k]] = max(f[i + 1][j - c[k]] , f[i][j] + z[k]);
+			}
+		for(int i = 0 ; i <= n ; ++ i)
+			for(int j = 0 ; j <= sp ; ++ j)
+				g[i] = max(g[i] , f[i][j]);
+		for(int i = 0 ; i <= n ; ++ i)
+			for(int j = 0 ; j <= mp ; ++ j)
+				f[i][j] = - INT_MAX;
+		f[0][mp] = 0;
+		for(int i = 0 ; i <= n ; ++ i)
+			for(int j = 0 ; j <= mp ; ++ j)
+			{
+				f[i + 1][min(j + dmp , mp)] = max(f[i + 1][min(j + dmp , mp)] , f[i][j]);
+				for(int k = 1 ; k <= n1 ; ++ k)
+					if(j >= b[k])
+						f[i + 1][j - b[k]] = max(f[i + 1][j - b[k]] , f[i][j] + y[k]);
+			}
+		for(int i = 0 ; i <= n ; ++ i)
+			for(int j = 0 ; j <= mp ; ++ j)
+				h[i] = max(h[i] , f[i][j]);
+		for(int i = 0 ; i <= n ; ++ i)
+			for(int j = 0 ; j <= i ; ++ j)
+				val[i] = max(val[i] , g[j] + h[i - j]);
+		for(int i = 0 ; i <= n ; ++ i)
+			for(int j = 0 ; j <= hp ; ++ j)
+				f[i][j] = - INT_MAX;
+		f[0][hp] = 0;
+		for(int i = 0 ; i <= n ; ++ i)
+			for(int j = 1 ; j <= hp ; ++ j)
+			{
+				if(min(j + dhp , hp) - a[i] > 0)
+					f[i + 1][min(j + dhp , hp) - a[i]] = max(f[i + 1][min(j + dhp , hp) - a[i]] , f[i][j]);
+				if(j > a[i])
+					f[i + 1][j - a[i]] = max(f[i][j] + 1 , f[i + 1][j - a[i]]);
+			}
+		for(int i = 1 ; i <= n ; ++ i)
+			for(int j = 1 ; j <= hp ; ++ j)
+				blood[i] = max(blood[i] , f[i][j]);
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			if(val[blood[i]] >= m)
+			{
+				printf("Yes %d\n" , i);
+				return;
+			}
+			if(i == die)
+			{
+				puts("No");
+				return;
+			}
+		}
+		if(die == n)
+			puts("No");
+		puts("Tie");
+	}
+
+	inline void main()
+	{
+		t = read();
+		while(t -- )
+			work();
+	}
+}
+
+int main()
+{
+//	freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
