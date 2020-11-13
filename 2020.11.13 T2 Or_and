@@ -1,0 +1,97 @@
+#include <cstdio>
+#include <cctype>
+#include <algorithm>
+#include <cstring>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	
+	inline ll read()
+	{
+		ll res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+	
+	ll n , m;
+	
+	const int jzp = 1e9 + 7;
+	const int Max_n = 65;
+	
+	inline int quickpow(ll x , ll y)
+	{
+		ll ret = 1;
+		if(y < 0)
+			return 0;
+		while(y)
+		{
+			if(y & 1)
+				ret *= x , ret %= jzp;
+			x *= x , x %= jzp , y >>= 1;
+		}
+		return ret;
+	}
+	
+	ll cnt[2][Max_n] , ans , tmp;
+	
+	inline void main()
+	{
+		n = read() , m = read();
+		for(int i = 0 ; i <= 60 ; ++ i)
+		{
+			for(int j = i + 1 ; j <= 60 ; ++ j)
+				if(n & (1ll << j))
+					cnt[0][i] += quickpow(2 , j - 1) , cnt[0][i] %= jzp;
+			if(n & (1ll << i))
+			{
+				for(int j = i - 1 ; j >= 0 ; -- j)
+					if(n & (1ll << j))
+						cnt[0][i] += quickpow(2 , j) , cnt[0][i] %= jzp;
+				++ cnt[0][i];
+			}
+		}
+		for(int i = 0 ; i <= 60 ; ++ i)
+		{
+			for(int j = i + 1 ; j <= 60 ; ++ j)
+				if(m & (1ll << j))
+					cnt[1][i] += quickpow(2 , j - 1) , cnt[1][i] %= jzp;
+			if(m & (1ll << i))
+			{
+				for(int j = i - 1 ; j >= 0 ; -- j)
+					if(m & (1ll << j))
+						cnt[1][i] += quickpow(2 , j) , cnt[1][i] %= jzp;
+				++ cnt[1][i];
+			}
+		}
+		for(int i = 0 ; i <= 60 ; ++ i)
+		{
+			tmp = cnt[0][i] * ((m + 1) % jzp) % jzp;
+			tmp += cnt[1][i] * ((n + 1) % jzp) % jzp , tmp %= jzp;
+			tmp -= cnt[0][i] * cnt[1][i] % jzp , tmp %= jzp;
+			ans += tmp * quickpow(2 , i) % jzp , ans %= jzp;
+		}
+		ans = (ans + jzp) % jzp;
+		printf("%lld\n" , ans);
+	}
+}
+
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
