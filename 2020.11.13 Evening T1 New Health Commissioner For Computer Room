@@ -1,0 +1,78 @@
+	#include <cstdio>
+#include <cctype>
+#include <algorithm>
+#include <climits>
+#include <cstring>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 105;
+	const int Max_s = 1 << 17;
+	const int Max_m = 20;
+	
+	ll g[Max_n][Max_s] , f[Max_s];
+	
+	int n , m , fee[Max_n] , cost[Max_n][Max_m];
+	
+	inline int lowbit(const int x)
+	{
+		return x & -x;
+	}
+	
+	inline void main()
+	{
+		n = read() , m = read();
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			fee[i] = read();
+			for(int j = 0 ; j < m ; ++ j)
+				cost[i][j] = read();
+		}
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			for(int j = 0 ; j < m ; ++ j)
+				g[i][1 << j] = fee[i] + cost[i][j];
+			g[i][0] = fee[i];
+			for(int j = 3 ; j < (1 << m) ; ++ j)
+				g[i][j] = g[i][j - lowbit(j)] + g[i][lowbit(j)] - fee[i];
+		}
+		for(int i = 1 ; i < (1 << m) ; ++ i)
+			f[i] = LLONG_MAX >> 1;
+		for(int i = 1 ; i <= n ; ++ i)
+			for(int s = 1 ; s < (1 << m) ; ++ s)
+				f[s] = min(f[s] , g[i][s]);
+		for(int s = 3 ; s < (1 << m) ; ++ s)
+			for(int t = s ; t ; t = (t - 1) & s)
+				f[s] = min(f[s] , f[t] + f[s ^ t]);
+		printf("%lld\n" , f[(1 << m) - 1]);
+	}
+}
+
+int main()
+{
+	//freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
