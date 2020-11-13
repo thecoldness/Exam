@@ -1,0 +1,65 @@
+#include <cstdio>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+#include <climits>
+#include <queue>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 3e5 + 5;
+	
+	int a[Max_n] , b[Max_n];
+	
+	ll ans;
+	
+	priority_queue<ll , vector<ll> , greater<ll> > zzz;
+	
+	inline void main()
+	{
+		int n = read();
+		for(int i = 1 ; i <= n ; ++ i)
+			a[i] = read() , ans += a[i];
+		for(int i = 1 ; i <= n ; ++ i)
+			b[i] = read() - a[i];
+		zzz.push(b[n]);
+		int now = n;
+		for(int i = 1 ; i < n / 2 ; ++ i)
+		{
+			ans += zzz.top();
+			zzz.pop();
+			zzz.push(b[ -- now]) , zzz.push(b[ -- now]);
+		}
+		ans += zzz.top();
+		printf("%lld\n" , ans);
+	}
+}
+
+int main()
+{
+	//freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
