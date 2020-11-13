@@ -1,0 +1,117 @@
+#include <cstdio>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 1e5 + 5;
+	const int jzp = 1e9 + 7;
+	
+	struct node
+	{
+		int pos , val;
+		node(int a , int b)
+		{
+			pos = a , val = b;
+		}
+		node(){}
+	}b[Max_n][30];
+	
+	int gcd(int a , int b)
+	{
+		return b == 0 ? a : gcd(b , a % b);
+	}
+	
+	int tot[Max_n] , n , a[Max_n];
+	
+	inline void file()
+	{
+		freopen("data.in" , "r" , stdin);
+	}
+	
+	inline void main()
+	{
+		// file();
+		n = read();
+		for(int i = 1 ; i <= n ; ++ i)
+			a[i] = read() , b[i][0].pos = i - 1;
+		b[n][ ++ tot[n]] = node(n , a[n]);
+		for(int i = n - 1 ; i >= 1 ; -- i)
+		{
+			if(gcd(a[i] , a[i + 1]) == a[i])
+			{
+				b[i][ ++ tot[i]] = node(b[i + 1][1].pos , a[i]);
+				if(a[i] == 1)
+				{
+					b[i][tot[i]].pos = n;
+					continue;
+				}
+				for(int j = 2 ; j <= tot[i + 1] ; ++ j)
+				{
+					int g = gcd(b[i + 1][j].val , a[i]);
+					if(g == b[i][tot[i]].val)
+						b[i][tot[i]].pos = b[i + 1][j].pos;
+					else b[i][ ++ tot[i]] = node(b[i + 1][j].pos , g);
+					if(g == 1)
+					{
+						b[i][tot[i]].pos = n;
+						break;
+					}
+				}
+				continue;
+			}
+			b[i][ ++ tot[i]] = node(i , a[i]);
+			if(a[i] == 1)
+			{
+				b[i][tot[i]].pos = n;
+				continue;
+			}
+			for(int j = 1 ; j <= tot[i + 1] ; ++ j)
+			{
+				int g = gcd(a[i] , b[i + 1][j].val);
+				if(g == b[i][tot[i]].val)
+					b[i][tot[i]].pos = b[i + 1][j].pos;
+				else b[i][ ++ tot[i]] = node(b[i + 1][j].pos , g);
+				if(g == 1)
+				{
+					b[i][tot[i]].pos = n;
+					break;
+				}
+			}
+		}
+		ll ans = 0;
+		for(int i = 1 ; i <= n ; ++ i)
+			for(int j = 1 ; j <= tot[i] ; ++ j)
+				ans += 1ll * (b[i][j].pos - b[i][j - 1].pos) * b[i][j].val % jzp , ans %= jzp;
+		printf("%lld\n" , (ans + jzp) % jzp);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
