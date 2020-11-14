@@ -1,0 +1,216 @@
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+	
+	const int Max_m = 1e6 + 5;
+	const int Max_n = 3e5 + 5;
+	
+	struct node
+	{
+		int nex , to , val , type;
+		node(int a , int b , int c , int d)
+		{
+			nex = a , to = b , val = c , type = d;
+		}
+		node(){}
+	}edge[Max_m * 2];
+	
+	int n , m , q , logm[Max_n] , fa[Max_n][20] , tot , dep[Max_n] , lst_minn[Max_n];
+	int ori[Max_n][20] , bak[Max_n][20] , head[Max_n] , f[Max_n] , minn[Max_n] , mst_minn[Max_n];
+	int up[Max_n];
+	
+	int find(const int x)
+	{
+		return f[x] == x ? x : f[x] = find(f[x]);
+	}
+	
+	inline void merge(const int x , const int y)
+	{
+		if(find(x) == find(y))
+			return;
+		f[find(x)] = find(y);
+	}
+	
+	inline void add_edge(const int x , const int y , const int z , const int e)
+	{
+		edge[ ++ tot] = node(head[x] , y , z , e) , head[x] = tot;
+		edge[ ++ tot] = node(head[y] , x , z , e) , head[y] = tot;
+	}
+	
+	struct Node
+	{
+		int from , to , val;
+		Node(int a , int b , int c)
+		{
+			from = a , to = b , val = c;
+		}
+		Node(){}
+	}line[Max_m];
+	
+	inline bool cmp(Node a , Node b)
+	{
+		return a.val < b.val;
+	}
+	
+	void dfs_tree(const int now , const int from)
+	{
+		dep[now] = dep[from] + 1 , fa[now][0] = from;
+		for(int i = 1 ; i <= logm[dep[now]] ; ++ i)
+			fa[now][i] = fa[fa[now][i - 1]][i - 1];
+		for(int i = 1 ; i <= logm[dep[now]] ; ++ i)
+			ori[now][i] = max(ori[fa[now][i - 1]][i - 1] , ori[now][i - 1]) , bak[now][i] = min(bak[fa[now][i - 1]][i - 1] , bak[now][i - 1]);
+		for(int i = logm[dep[now]] + 1 ; i <= 19 ; ++ i)
+			ori[now][i] = INT_MAX , bak[now][i] = INT_MAX;
+		minn[now] = INT_MAX , lst_minn[now] = INT_MAX , mst_minn[now] = INT_MAX;
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int va = edge[i].val;
+			if(edge[i].to == from)	continue;
+			if(va < minn[now])
+				mst_minn[now] = lst_minn[now] , lst_minn[now] = minn[now] , minn[now] = va;
+			else if(va < lst_minn[now])
+					mst_minn[now] = lst_minn[now] , lst_minn[now] = va;
+			else if(va < mst_minn[now])
+					mst_minn[now] = va;
+		}
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			if(edge[i].type == 0)
+				continue;
+			int nex = edge[i].to , va = edge[i].val;
+			if(nex == from)
+				continue;
+			up[nex] = va;
+			ori[nex][0] = va , bak[nex][0] = (va == minn[now] ? lst_minn[now] : minn[now]);
+			dfs_tree(nex , now);
+		}
+	}
+	
+	inline int check(int x , int y)
+	{
+		int ret = 0 , sup = INT_MAX , cpx = x , cpy = y;
+		while(dep[x] > dep[y])
+		{
+			ret = max(ret , ori[x][logm[dep[x] - dep[y]]]);
+			sup = min(sup , bak[x][logm[dep[x] - dep[y]]]);
+			x = fa[x][logm[dep[x] - dep[y]]];
+		}
+		while(dep[y] > dep[x])
+		{
+			ret = max(ret , ori[y][logm[dep[y] - dep[x]]]);
+			sup = min(sup , bak[y][logm[dep[y] - dep[x]]]);
+			y = fa[y][logm[dep[y] - dep[x]]];
+		}
+		if(x == y)
+		{
+			if(dep[cpx] > dep[cpy])	swap(cpx , cpy);
+			sup = min(sup , min(minn[cpy] , up[x]));
+			y = cpy;
+			while(dep[y] > dep[x] + 1)
+				y = fa[y][logm[dep[y] - dep[x] - 1]];
+			if(up[y] == minn[x])
+				sup = min(sup , lst_minn[x]);
+			else sup = min(sup , minn[x]);
+			return max(ret , sup);
+		}
+		for(int i = logm[dep[x]] ; i >= 0 ; -- i)
+		{
+			if(fa[x][i] == fa[y][i])	continue;
+			ret = max(ret , max(ori[x][i] , ori[y][i]));
+			sup = min(sup , min(bak[x][i] , bak[y][i]));
+			x = fa[x][i] , y = fa[y][i];
+		}
+		int tmp1 = up[x] , tmp2 = up[y] , ff = fa[x][0];
+		ret = max(ret , max(up[x] , up[y]));
+		if(tmp1 > tmp2)	swap(tmp1 , tmp2);
+		if(tmp1 != minn[ff])
+			sup = min(sup , minn[ff]);
+		else if(tmp2 != lst_minn[ff])
+			sup = min(sup , lst_minn[ff]);
+		else sup = min(sup , mst_minn[ff]);
+		sup = min(sup , min(minn[cpx] , minn[cpy]));
+		sup = min(sup , up[ff]);// bug There was no this sentence.
+		return max(ret , sup);
+	}
+	
+	inline void main()
+	{
+		n = read() , m = read() , q = read();
+		for(int i = 1 ; i <= m ; ++ i)
+		{
+			int ui = read() , vi = read() , ti = read();
+			line[i] = Node(ui , vi , ti);
+		}
+		sort(line + 1 , line + m + 1 , cmp);
+		for(int i = 1 ; i <= n ; ++ i)
+			f[i] = i;
+		int cnt = 0;
+		for(int i = 1 ; i <= m ; ++ i)
+		{
+			int nowx = line[i].from , nowy = line[i].to;
+			if(find(nowx) == find(nowy))
+			{
+				add_edge(nowx , nowy , line[i].val , 0);
+				continue;
+			}
+			merge(nowx , nowy);
+			add_edge(nowx , nowy , line[i].val , 1);
+		}
+		for(int i = 2 ; i <= n ; ++ i)
+			logm[i] = logm[i / 2] + 1;
+		ori[0][0] = 0 , bak[0][0] = INT_MAX , up[1] = up[0] = INT_MAX;
+		dfs_tree(1 , 0);
+		while(q --)
+		{
+			int ui = read() , vi = read();
+			int ret = check(ui , vi);
+			if(ret == INT_MAX)
+				puts("-1");
+			else printf("%d\n" , ret);
+		}
+	}
+}
+
+int main()
+{
+//	freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
+/*
+5 6 1
+1 2 10
+2 3 2
+2 4 8
+2 5 6
+4 5 9
+3 1 5
+4 5
+ans : 9
+*/
