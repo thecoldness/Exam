@@ -1,0 +1,262 @@
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 2e5 + 5;
+
+	struct node
+	{
+		int nex , to;
+		node(int a , int b)
+		{
+			nex = a , to = b;
+		}
+		node(){}
+	}edge[Max_n * 2];
+
+	struct Node
+	{
+		int l , r;
+		ll sum_own , sum_fa;
+		Node(int a , int b)
+		{
+			l = a , r = b , sum_own = sum_fa = 0;
+		}
+		Node(){}
+	}tree[Max_n << 2];
+
+	int head[Max_n] , tot , a[Max_n] , w[Max_n] , n , siz[Max_n];
+	int top[Max_n] , dfn[Max_n] , tim , dep[Max_n] , fa[Max_n] , q;
+	int st[Max_n] , tp , son[Max_n] , rev[Max_n] , logm[Max_n] , tree_fa[Max_n][20];
+
+	inline void add_edge(const int x , const int y)
+	{
+		edge[ ++ tot] = node(head[x] , y);
+		head[x] = tot;
+	}
+
+	void dfs_son(const int now , const int from)
+	{
+		siz[now] = 1 , fa[now] = from , dep[now] = dep[from] + 1;
+		tree_fa[now][0] = from;
+		for(int i = 1 ; i <= logm[dep[now]] ; ++ i)
+			tree_fa[now][i] = tree_fa[tree_fa[now][i - 1]][i - 1];
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			dfs_son(nex , now);
+			if(siz[son[now]] < siz[nex])
+				son[now] = nex;
+			siz[now] += siz[nex];
+		}
+	}
+
+	void dfs_chain(const int now , const int tp)
+	{
+		top[now] = tp , dfn[now] = ++ tim;
+		rev[tim] = now;
+		if(!son[now])	return;
+		dfs_chain(son[now] , tp);
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			if(nex == son[now])	continue;
+			dfs_chain(nex , nex);
+		}
+	}
+
+	inline void push_up(const int tr)
+	{
+		tree[tr].sum_own = tree[tr * 2].sum_own + tree[tr * 2 + 1].sum_own;
+		tree[tr].sum_fa = tree[tr * 2].sum_fa + tree[tr * 2 + 1].sum_fa;
+	}
+
+	void build(const int l , const int r , const int tr)
+	{
+		tree[tr] = Node(l , r);
+		if(l == r)
+		{
+			tree[tr].sum_own = w[rev[l]];
+			return;
+		}
+		int mid = (l + r) >> 1;
+		build(l , mid , tr * 2);
+		build(mid + 1 , r , tr * 2 + 1);
+		push_up(tr);
+	}
+
+	void change(const int pos , const int tr , const int val)
+	{
+		int ll = tree[tr].l , rr = tree[tr].r;
+		if(ll == rr)
+		{
+			tree[tr].sum_own += val;
+			tree[tr].sum_fa += val;
+			return;
+		}
+		int mid = (ll + rr) >> 1;
+		if(mid >= pos)
+			change(pos , tr * 2 , val);
+		else change(pos , tr * 2 + 1 , val);
+		push_up(tr);
+	}
+
+	ll query_own(const int l , const int r , const int tr)
+	{
+		int ll = tree[tr].l , rr = tree[tr].r;
+		if(l > rr || r < ll)
+			return 0;
+		if(l <= ll && rr <= r)
+			return tree[tr].sum_own;
+		return query_own(l , r , tr * 2) + query_own(l , r , tr * 2 + 1);
+	}
+
+	ll query_fa(const int l , const int r , const int tr)
+	{
+		int ll = tree[tr].l , rr = tree[tr].r;
+		if(l > rr || r < ll)
+			return 0;
+		if(l <= ll && rr <= r)
+			return tree[tr].sum_fa;
+		return query_fa(l , r , tr * 2) + query_fa(l , r , tr * 2 + 1);
+	}
+
+	inline int lca(int x , int y)
+	{
+		while(dep[x] > dep[y])
+			x = tree_fa[x][logm[dep[x] - dep[y]]];
+		while(dep[y] > dep[x])
+			y = tree_fa[y][logm[dep[y] - dep[x]]];
+		if(x == y)	return x;
+		for(int i = logm[dep[x]] ; i >= 0 ; -- i)
+		{
+			if(tree_fa[x][i] == tree_fa[y][i])
+				continue;
+			x = tree_fa[x][i] , y = tree_fa[y][i];
+		}
+		return fa[x];
+	}
+
+	inline ll get_own(int x , int y)
+	{
+		ll ret = 0;
+		while(top[x] != top[y])
+		{
+			if(dep[top[x]] < dep[top[y]])
+				swap(x , y);
+			ret += query_own(dfn[top[x]] , dfn[x] , 1);
+			x = fa[top[x]];
+		}
+		if(dfn[x] > dfn[y])
+			swap(x , y);
+		ret += query_own(dfn[x] , dfn[y] , 1);
+		return ret;
+	}
+
+	inline ll get_fa(int x , int y)
+	{
+		ll ret = 0;
+		while(top[x] != top[y])
+		{
+			if(dep[top[x]] < dep[top[y]])
+				swap(x , y);
+			ret += query_fa(dfn[top[x]] , dfn[x] , 1);
+			x = fa[top[x]];
+		}
+		if(dfn[x] > dfn[y])
+			swap(x , y);
+		ret += query_fa(dfn[x] , dfn[y] , 1);
+		return ret;
+	}
+
+	inline void main()
+	{
+		n = read() , q = read();
+		for(int i = 1 ; i <= n ; ++ i)
+			a[i] = read();
+		for(int i = 1 ; i <= n ; ++ i)
+			w[i] = read();
+		a[ ++ n] = INT_MAX , st[ ++ tp] = n;
+		for(int i = n - 1 ; i ; -- i)
+		{
+			while(tp && a[st[tp]] <= a[i])
+				-- tp;
+			add_edge(st[tp] , i);
+			st[ ++ tp] = i;
+		}
+		for(int i = 2 ; i <= n ; ++ i)
+			logm[i] = logm[i / 2] + 1;
+		dfs_son(n , 0);
+		dfs_chain(n , n);
+		build(1 , n , 1);
+		while(q --)
+		{
+			int type = read() , xi = read() , yi = read();
+			if(type == 1)
+				change(dfn[xi] , 1 , yi);
+			else
+			{
+				int l = lca(xi , yi);
+				if(l == n)
+				{
+					puts("?");
+					continue;
+				}
+				if(dep[xi] < dep[yi])
+					swap(xi , yi);
+				ll ans = 0;
+				if(l == xi || l == yi)
+				{				
+					if(l == max(xi , yi))
+						l = fa[l];
+					if(l == n)
+					{
+						puts("?");
+						continue;
+					}
+					ans += get_own(xi , l);
+					ans += get_fa(fa[l] , fa[xi]);
+				}
+				else
+				{
+					ans += get_own(xi , yi);
+					ans += get_fa(fa[xi] , fa[yi]);
+					ans += get_fa(l , fa[l]);
+				}
+				printf("%lld\n" , ans);
+			}
+		}
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
