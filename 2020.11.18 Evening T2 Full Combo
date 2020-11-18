@@ -1,0 +1,101 @@
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <algorithm>
+#include <queue>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	struct God
+	{
+		int val , id;
+		God(int a , int b)
+		{
+			val = a , id = b;
+		}
+		God(){}
+		bool operator < (const God &a)const
+		{
+			return val > a.val;
+		}
+	};
+
+	priority_queue<God> zzz;
+
+	const int Max_n = 1e6 + 5;
+
+	ll BIT[Max_n] , w[Max_n] , ans , f[Max_n];
+
+	int n , a[Max_n] , t[Max_n];
+
+	inline int lowbit(const int x)
+	{
+		return x & -x;
+	}
+
+	inline void add(const int pos , const ll val)
+	{
+		for(int i = pos ; i <= n ; i += lowbit(i))
+			BIT[i] = max(BIT[i] , val);
+	}
+
+	inline ll query(const int pos)
+	{
+		ll ret = 0;
+		for(int i = pos ; i ; i -= lowbit(i))
+			ret = max(ret , BIT[i]);
+		return ret;
+	}
+
+	inline void main()
+	{
+		n = read();
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			t[i] = read();
+			zzz.push(God(i + t[i] , i));
+		}
+		for(int i = 1 ; i <= n ; ++ i)
+			w[i] = (ll) read() * t[i];
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			while(!zzz.empty() && zzz.top().val <= i)
+			{
+				add(zzz.top().id , f[zzz.top().id]);
+				zzz.pop();
+			}
+			f[i] = query(max(0 , i - t[i])) + w[i];
+		}
+		for(int i = 1 ; i <= n ; ++ i)
+			ans = max(ans , f[i]);
+		printf("%lld\n" , ans);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
