@@ -1,0 +1,113 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <cctype>
+#include <queue>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : - res;
+	}
+
+	const int Max_n = 1e6 + 5;
+	const int Max_m = 2e6 + 5;
+	const int jzp = 1e9 + 7;
+
+	struct node
+	{
+		int nex , to , val;
+		node(int a , int b , int c)
+		{
+			nex = a , to = b , val = c;
+		}
+		node(){}
+	}edge[Max_m];
+
+	int head[Max_n] , n , m , tot , cnt;
+
+	inline void add_edge(const int x , const int y , const int val)
+	{
+		edge[ ++ tot] = node(head[x] , y , val);
+		head[x] = tot;
+	}
+
+	struct God
+	{
+		int pre , lst , id;
+		God(int a , int b , int c)
+		{
+			pre = a , lst = b , id = c;
+		}
+		God(){}
+		bool operator < (const God &a)const
+		{
+			if(pre != a.pre)
+				return pre > a.pre;
+			return lst > a.lst;
+		}
+	};
+
+	priority_queue<God> zzz;
+
+	ll base[Max_n] , dis[Max_n] , rev[Max_n] , lstdis = -100;
+
+	bool vis[Max_n];
+
+	inline void main()
+	{
+		memset(dis , -1 , sizeof(dis));
+		n = read() , m = read();
+		for(int i = 1 ; i <= m ; ++ i)
+		{
+			int ui = read() , vi = read() , ti = read();
+			add_edge(ui , vi , ti);
+		}
+		base[0] = 1;
+		for(int i = 1 ; i <= n ; ++ i)
+			base[i] = base[i - 1] * 2 % jzp;
+		zzz.push(God(0 , 0 , 1));
+		while(!zzz.empty())
+		{
+			ll de = (rev[zzz.top().pre] * 2 % jzp) + zzz.top().lst;
+			int now = zzz.top().id;
+			zzz.pop();
+			if(vis[now])	continue;
+			vis[now] = true;
+			dis[now] = de;
+			cnt += (de != lstdis) , rev[cnt] = de , lstdis = de;
+			for(int i = head[now] ; i ; i = edge[i].nex)
+			{
+				int nex = edge[i].to;
+				if(vis[nex])	continue;
+				zzz.push(God(cnt , edge[i].val , nex));
+			}
+		}
+		for(int i = 2 ; i <= n ; ++ i)
+			printf("%lld " , dis[i]);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
