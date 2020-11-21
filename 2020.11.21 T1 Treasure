@@ -1,0 +1,160 @@
+#include <cstdio>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+#include <climits>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	
+	inline ll read()
+	{
+		ll res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 3e5 + 5;
+	const ll INF = 1e12;
+	
+	int n , q , ans[Max_n] , now , tp;
+	
+	ll t;
+	
+	struct SegmentTree
+	{
+		ll sum[(int)6e6 + 5] , cnt[(int)6e6 + 5];
+		int tot , root , son[(int)6e6 + 5][2];
+		
+		inline void push_up(const int tr)
+		{
+			sum[tr] = sum[son[tr][0]] + sum[son[tr][1]];
+			cnt[tr] = cnt[son[tr][0]] + cnt[son[tr][1]];
+		}
+		
+		void insert(const ll l , const ll r , const ll pos , const int val , int& tr)
+		{
+			if(!tr)	tr = ++ tot;
+			if(l == r)
+			{
+				cnt[tr] += val;
+				sum[tr] = cnt[tr] * l;
+				return;
+			}
+			ll mid = (l + r) >> 1;
+			if(mid >= pos)
+				insert(l , mid , pos , val , son[tr][0]);
+			else insert(mid + 1 , r , pos , val , son[tr][1]);
+			push_up(tr);
+		}
+		
+		ll query(const ll l , const ll r , const int tr , const int kth)
+		{
+			// if(!tr && kth)	return INF;
+			if(!tr)	return 0;
+			if(cnt[tr] == kth)
+				return sum[tr];
+			if(cnt[tr] < kth)
+				return INF;
+			if(l == r)
+				return kth * l;// bug
+			ll mid = (l + r) >> 1;
+			if(cnt[son[tr][0]] >= kth)
+				return query(l , mid , son[tr][0] , kth);
+			ll ret = sum[son[tr][0]];
+			ret += query(mid + 1 , r , son[tr][1] , kth - cnt[son[tr][0]]);
+			return ret;
+		}
+	}pre , suf;
+	
+	struct node
+	{
+		ll wi , ti;
+		node(ll a , ll b)
+		{
+			wi = a , ti = b;
+		}
+		node(){}
+	}w[Max_n] , a[Max_n];
+	
+	bool wqqka = true;
+	
+	inline bool cmp(node a , node b)
+	{
+		// return a.ti < b.ti;	bug
+		return a.wi < b.wi;
+	}
+	
+	inline void main()
+	{
+		memset(ans , -1 , sizeof(ans));
+		n = read() , t = read() , q = read();
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			ll ui = read() , vi = read();
+			w[i] = node(ui , vi);
+		}
+		for(int i = 1 ; i <= n ; ++ i)
+			if(w[i].ti <= t)
+				a[ ++ tp] = w[i];
+		sort(a + 1 , a + tp + 1 , cmp);
+		now = tp;
+		for(int i = 1 ; i <= tp ; ++ i)
+			pre.insert(1 , INF , a[i].ti , 1 , pre.root);
+		pre.insert(1 , INF , INF , 1 , pre.root);
+		suf.insert(1 , INF , INF , 1 , suf.root);
+		int pos = 0;
+		for(int i = now ; i ; -- i)
+		{
+			ll hav = a[i].ti;
+			pre.insert(1 , INF , a[i].ti , -1 , pre.root);
+			while(wqqka)
+			{
+				if(pos * 2 + 1 > n)	break;
+				ll tmp = pre.query(1 , INF , 1 , pos) + suf.query(1 , INF , 1 , pos);
+				if(hav + tmp <= t)
+					ans[pos * 2 + 1] = a[i].wi , ++ pos;
+				else break;
+			}
+			suf.insert(1 , INF , a[i].ti , 1 , suf.root);
+		}
+		while(q --)
+		{
+			int ui = read();
+			printf("%d\n" , ans[ui]);
+		}
+	}
+}
+
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
+/*
+7 70 1
+8 19
+5 15
+10 20
+5 18
+1 15
+3 10
+9 12
+5
+
+*/
