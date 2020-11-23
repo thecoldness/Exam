@@ -1,0 +1,78 @@
+#include <cstdio>
+#include <cctype>
+#include <algorithm>
+#include <set>
+#include <cstring>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	typedef set<int>::iterator iter;
+
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 40;
+
+	int n , jzp , w[Max_n] , ans;
+
+	set<int> s;
+
+	void dfs_pre(const int now , const int val)
+	{
+		if(now > n / 2)
+		{
+			s.insert(val);
+			return;
+		}
+		dfs_pre(now + 1 , val);
+		dfs_pre(now + 1 , (val + w[now]) % jzp);
+	}
+
+	void dfs_nex(const int now , const int val)
+	{
+		if(now > n)
+		{
+			int tmp = jzp - val - 1;
+			iter it = s.upper_bound(tmp);
+			-- it;
+			ans = max(ans , val + (*it));
+			return;
+		}
+		dfs_nex(now + 1 , val);
+		dfs_nex(now + 1 , (val + w[now]) % jzp);
+	}
+
+	inline void main()
+	{
+		n = read() , jzp = read();
+		for(int i = 1 ; i <= n ; ++ i)
+			w[i] = read() % jzp;
+		dfs_pre(1 , 0);
+		dfs_nex(n / 2 + 1 , 0);
+		printf("%d\n" , ans);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
