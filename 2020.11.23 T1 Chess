@@ -1,0 +1,75 @@
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <algorithm>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int jzp = 1e9 + 7;
+	const int Max_n = 155;
+	const int Max_k = 25;
+
+	int f[Max_n * 2][Max_k][Max_k][Max_n] , n , m , lim , ans;
+
+	inline void add(int &x , const int y)
+	{
+		x += y;
+		if(x >= jzp)
+			x -= jzp;
+	}
+
+	inline void main()
+	{
+		n = read() , m = read() , lim = read();
+		if(n - m > lim || m - n > lim)
+		{
+			printf("0");
+			return;
+		}
+		n += m;
+		f[0][lim][lim][0] = 1;
+		for(int i = 0 ; i < n ; ++ i)
+			for(int j = 0 ; j <= lim ; ++ j)
+				for(int k = 0 ; k <= lim ; ++ k)
+					for(int l = 0 ; l <= min(i , n - m) ; ++ l)
+					{
+						if(!f[i][j][k][l])	continue;
+						if(k != 0)
+							add(f[i + 1][min(j + 1 , lim)][k - 1][l] , f[i][j][k][l]);
+						if(j != 0)
+							add(f[i + 1][j - 1][min(k + 1 , lim)][l + 1] , f[i][j][k][l]);
+					}
+		for(int i = 0 ; i <= lim ; ++ i)
+			for(int j = 0 ; j <= lim ; ++ j)
+				add(ans , f[n][i][j][n - m]);
+		printf("%d\n" , ans);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
