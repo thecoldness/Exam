@@ -1,0 +1,81 @@
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <algorithm>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 2005;
+	const int INF = 1e7;
+
+	int q[Max_n] , f[Max_n][11][11][11][11] , n , k , w[Max_n];
+
+	inline int dist(const int x , const int y)
+	{
+		return abs(x - y);
+	}
+
+	inline int dfs(const int now , const int pos , const int a , const int b , const int c)
+	{		
+		if(f[now][pos][a][b][c] != -1)	return f[now][pos][a][b][c];
+		int ret = INF;		
+		if(a)	ret = min(ret , dfs(now , a , b , c , 0) + dist(pos , a) + 2);
+		if(b)	ret = min(ret , dfs(now , b , a , c , 0) + dist(pos , b) + 2);
+		if(c)	ret = min(ret , dfs(now , c , a , b , 0) + dist(pos , c) + 2);
+		if(now > n)
+		{
+			if(!a && !b && !c)	return 0;
+			return f[now][pos][a][b][c] = ret;
+		}
+		if(a && b && c)
+		{
+			ret = min(ret , dfs(now + 1 , a , q[now] , b , c) + dist(pos , w[now]) + dist(w[now] , a) + 2);
+			ret = min(ret , dfs(now + 1 , b , q[now] , a , c) + dist(pos , w[now]) + dist(w[now] , b) + 2);
+			ret = min(ret , dfs(now + 1 , c , q[now] , a , b) + dist(pos , w[now]) + dist(w[now] , c) + 2);
+			ret = min(ret , dfs(now + 1 , q[now] , a , b , c) + dist(pos , w[now]) + dist(w[now] , q[now]) + 2);// bug
+		}
+		else
+		{
+			if(!a)	ret = min(ret , dfs(now + 1 , w[now] , q[now] , b , c) + dist(pos , w[now]));
+			else if(!b)	ret = min(ret , dfs(now + 1 , w[now] , a , q[now] , c) + dist(pos , w[now]));
+			else ret = min(ret , dfs(now + 1 , w[now] , a , b , q[now]) + dist(pos , w[now]));
+		}
+		return f[now][pos][a][b][c] = ret;
+	}
+
+	inline void main()
+	{
+		memset(f , -1 , sizeof(f));
+		n = read() , k = read();
+		for(int i = 1 ; i <= n ; ++ i)
+			w[i] = read() , q[i] = read();
+		printf("%d\n" , dfs(1 , 1 , 0 , 0 , 0));
+	}
+}
+
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
