@@ -1,0 +1,161 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <cctype>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	
+	inline ll read()
+	{
+		ll res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 3e5 + 5;
+	const int Max_dot = 2e7 + 5;
+	const int jzp = 998244353;
+	
+	int n , son[Max_dot][2] , sum[Max_dot];
+	int tot = 1 , root = 1;
+	
+	ll w[Max_n] , k;
+
+	inline void insert(const ll x)
+	{
+		int now = root;
+		for(int i = 60 ; i >= 0 ; -- i)
+		{
+			++ sum[now];
+			if(i == 0)	break;
+//			int ch = x & (1ll << (i - 1)); bug
+			int ch = (x >> (i - 1)) & 1;
+			if(!son[now][ch])	son[now][ch] = ++ tot;
+			now = son[now][ch];
+		}
+	}
+
+	inline int find(const ll x)
+	{
+		int now = root , ret = 0;
+		for(int i = 60 ; i >= 0 ; -- i)
+		{
+			if(!now)	break;
+			if(i == 0)
+			{
+				ret += sum[now];
+				break;
+			}
+			if(k & (1ll << (i - 1)))
+			{
+				if(x & (1ll << (i - 1)))
+					now = son[now][0];
+				else now = son[now][1];
+			}
+			else
+			{
+				if(x & (1ll << (i - 1)))
+					ret += sum[son[now][0]] , now = son[now][1];
+				else ret += sum[son[now][1]] , now = son[now][0];
+			}
+		}
+		return ret;
+	}
+	
+	inline void del(const ll x)
+	{
+		int now = root;
+		for(int i = 60 ; i >= 0 ; -- i)
+		{
+			-- sum[now];
+			if(i == 0)	break;
+//			int ch = x & (1ll << (i - 1)); bug
+			int ch = (x >> (i - 1)) & 1;
+			now = son[now][ch];
+		}
+	}
+	
+	inline int add(const int x , const int y)
+	{
+		int ret = x + y;
+		if(ret >= jzp)
+			ret -= jzp;
+		return ret;
+	}
+	
+	ll solve(const int l , const int r , const int bit)
+	{
+//		if(l > r || l == r)	return 1; bug
+		if(l > r)	return 1;
+		int mid = r , ret = 0;
+		for(int i = l + 1 ; i <= r ; ++ i)
+			if((w[i - 1] & (1ll << bit)) != (w[i] & (1ll << bit)))
+			{
+				mid = i - 1;
+				break;
+			}
+		if(k & (1ll << bit))
+		{
+			for(int i = l ; i <= mid ; ++ i)
+				insert(w[i]);
+			for(int i = mid + 1 ; i <= r ; ++ i)
+				ret = add(ret , find(w[i]));
+			for(int i = l ; i <= mid ; ++ i)
+				del(w[i]);
+			ret = add(ret , r - l + 2);// bug
+			return ret;
+		}
+		return solve(l , mid , bit - 1) * solve(mid + 1 , r , bit - 1) % jzp;
+	}
+	
+	inline int quickpow(ll x , ll y)
+	{
+		ll ret = 1;
+		while(y)
+		{
+			if(y & 1)
+				ret *= x , ret %= jzp;
+			x *= x , x %= jzp , y >>= 1;
+		}
+		return ret;
+	}
+	
+	inline void main()
+	{
+		n = read() , k = read();
+		if(k == 0)
+		{
+			printf("%d\n" , quickpow(2 , n) - 1);
+			return;
+		}
+		for(int i = 1 ; i <= n ; ++ i)
+			w[i] = read();
+		sort(w + 1 , w + n + 1);
+		printf("%lld\n" , solve(1 , n , 60) - 1);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
+/*
+2 2
+3 5
+*/
