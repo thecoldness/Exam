@@ -1,0 +1,121 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <cctype>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 420;
+	
+	int w[Max_n] , siz[Max_n] , val[Max_n] , f[Max_n][Max_n * 2];
+	int n , k , head[Max_n] , tot , cost[Max_n];
+	
+	struct node
+	{
+		int nex , to;
+		node(int a , int b)
+		{
+			nex = a , to = b;
+		}
+		node(){}
+	}edge[Max_n * 2];
+	
+	void dfs_tree(const int now , const int from)
+	{
+		siz[now] = val[now];
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			if(nex == from)	continue;
+			dfs_tree(nex , now);
+			if(!siz[nex])	continue;
+			siz[now] += siz[nex] , cost[now] += cost[nex] + 2;
+		}
+	}
+	
+	inline void add_edge(const int x , const int y)
+	{
+		edge[ ++ tot] = node(head[x] , y) , head[x] = tot;
+		edge[ ++ tot] = node(head[y] , x) , head[y] = tot;
+	}
+	
+	void dfs_dp(const int now , const int from)
+	{
+		int g[Max_n * 2];
+		f[now][0] = 0;
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			if(nex == from || !siz[nex])	continue;
+			dfs_dp(nex , now);
+			memcpy(g , f[now] , sizeof(g));
+			for(int j = 0 ; j <= n * 2 ; ++ j)
+				f[now][j] += cost[nex] + 2;
+			for(int j = cost[nex] + 2 ; j <= 2 * n ; ++ j)
+				f[now][j] = min(f[now][j] , g[j - cost[nex] - 2]);
+			for(int j = 2 ; j <= n * 2 ; ++ j)
+				for(int k = 0 ; k <= j - 2; ++ k)
+//					f[now][j] = min(f[now][j] , g[j - k] + f[nex][k]); bug
+//					f[now][j] = min(f[now][j] , g[j - k] + f[nex][k] + 2); bug
+//					f[now][j] = min(f[now][j] , g[j - k] + f[nex][k + 2] + 2); bug
+//					f[now][j] = min(f[now][j] , g[j - k - 2] + f[nex][k + 2] + 2); bug
+					f[now][j] = min(f[now][j] , g[j - k - 2] + f[nex][k] + 2);
+		}
+	}
+	
+	inline void main()
+	{
+		memset(f , 0x3f , sizeof(f));
+		n = read() , k = read();
+		for(int i = 1 ; i < n ; ++ i)
+			add_edge(read() , read());
+		for(int i = 1 ; i <= k ; ++ i)
+			w[i] = read() , val[w[i]] = 1;
+		dfs_tree(1 , 0);
+		dfs_dp(1 , 0);
+		int ans = n * 2;
+		for(int i = 0 ; i <= n * 2 ; ++ i)
+			ans = min(ans , max(i , f[1][i]));
+		printf("%d\n" , ans);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
+/*
+3 1
+1 2
+2 3
+3 
+ans = 4
+
+4 3
+1 2
+2 3
+1 4
+4 2 3 
+ans = 4
+*/
