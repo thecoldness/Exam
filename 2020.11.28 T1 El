@@ -1,0 +1,91 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <algorithm>
+#include <bitset>
+#include <climits>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+
+	inline ll read()
+	{
+		ll res = 0;
+		bool flag = false;
+		char c;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 1e5 + 5;
+	 
+	struct node
+	{
+		int nex , to;
+		node(int a , int b)
+		{
+			nex = a , to = b;
+		}
+		node(){}
+	}edge[Max_n * 4];
+	
+	int head[Max_n] , tot = 1 , in[Max_n] , cpin[Max_n] , n , m;
+	int ans;
+	
+	inline void add_edge(const int x , const int y)
+	{
+		edge[ ++ tot] = node(head[x] , y) , head[x] = tot;
+		edge[ ++ tot] = node(head[y] , x) , head[y] = tot;
+		++ cpin[x] , ++ cpin[y];
+	}
+	
+	bool vis[Max_n];
+		
+	inline void dfs(const int now , const int ine)
+	{
+		vis[now] = true;
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			if(i == ine)	continue;
+			int nex = edge[i].to;
+			if(vis[nex])	{++ ans; continue;}
+			dfs(nex , i ^ 1);
+		}
+	}
+	
+	inline void main()
+	{
+		n = read() , m = read();
+		for(int i = 1 ; i <= m ; ++ i)
+		{
+			int wi = read() , qi = read();
+			if(wi == qi)	{ans += 2; continue;}
+			add_edge(wi , qi);
+		}
+//		dfs(1 , 0); bug
+		for(int i = 1 ; i <= n ; ++ i)
+			if(!vis[i])
+				dfs(i , 0);
+//		printf("%d\n" , ans); bug
+		printf("%d\n" , ans / 2);
+	}
+}
+
+int main()
+{
+//	freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
