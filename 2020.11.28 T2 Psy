@@ -1,0 +1,81 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <cctype>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 3e5 + 5;
+	
+	int bit[Max_n] , n , w[Max_n];
+	
+	ll pre[Max_n] , suf[Max_n] , ans;
+	
+	inline int lowbit(const int x)
+	{
+		return x & -x;
+	}
+	
+	inline void add(const int pos , const int val)
+	{
+		for(int i = pos ; i <= n ; i += lowbit(i))
+			bit[i] += val;
+	}
+	
+	inline int query(const int pos)
+	{
+		int ret = 0;
+		for(int i = pos ; i ; i -= lowbit(i))
+			ret += bit[i];
+		return ret;
+	}
+	
+	inline void main()
+	{
+		n = read();
+		for(int i = 1 ; i <= n ; ++ i)
+			w[i] = read();
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			pre[i] = query(n) - query(w[i]);
+			add(w[i] , 1);
+		}
+		memset(bit , 0 , sizeof(bit));
+		for(int i = n ; i ; -- i)
+		{
+			suf[i] = query(n) - query(w[i]);
+			add(w[i] , 1);
+		}
+		for(int i = 1 ; i <= n ; ++ i)
+			ans += min(pre[i] , suf[i]);
+		printf("%lld\n"  , ans);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
