@@ -1,0 +1,88 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <cctype>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 5e3 + 5;
+	const int Max_p = 1e4 + 5;
+	
+	int f[Max_n][Max_p] , n , p , dfn[Max_n] , tot , tim;
+	int siz[Max_n] , w[Max_n] , q[Max_n] , head[Max_n] , rev[Max_n];
+	
+	struct node
+	{
+		int nex , to;
+		node(int a , int b)
+		{
+			nex = a , to = b;
+		}
+		node(){}
+	}edge[Max_n << 1];
+	
+	inline void add_edge(const int x , const int y)
+	{
+		edge[ ++ tot] = node(head[x] , y);
+		head[x] = tot;
+	}
+	
+	void dfs(const int now)
+	{
+		siz[now] = 1 , dfn[now] = ++ tim , rev[tim] = now;
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			dfs(nex);
+			siz[now] += siz[nex];
+		}
+	}
+	
+	inline void main()
+	{
+		n = read() , p = read();
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			w[i] = read(); int ui = read(); q[i] = read();
+			if(i == 1)	continue;
+			add_edge(ui , i);
+		}
+		dfs(1);
+		for(int i = n ; i ; -- i)
+			for(int j = p ; j ; -- j)
+			{
+				int now = rev[i];
+//				f[i][j] = f[i + siz[i]][j]; bug
+				f[i][j] = f[i + siz[now]][j];
+				if(j >= w[now])
+					f[i][j] = max(f[i][j] , f[i + 1][j - w[now]] + q[now]);
+			}
+		printf("%d\n" , f[1][p]);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
