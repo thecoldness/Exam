@@ -1,0 +1,224 @@
+#include <cstdio>
+#include <cctype>
+#include <algorithm>
+#include <cstring>
+#include <vector>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	
+	inline int read()
+	{
+		int res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 1e5 + 5;
+	const int jzp = 998244353;
+	
+	int w[Max_n] , n , head[Max_n] , tot , dfn[Max_n] , dep[Max_n];
+	int siz[Max_n] , rev[Max_n] , top[Max_n] , son[Max_n] , fa[Max_n];
+	int inv100 , ans[Max_n] , tim;
+	
+	vector<int> v[Max_n];
+	
+	struct node
+	{
+		int nex , to;
+		node(int a , int b)
+		{
+			nex = a , to = b;
+		}
+		node(){}
+	}edge[Max_n << 1];
+	
+	inline void add_edge(const int x , const int y)
+	{
+		edge[ ++ tot] = node(head[x] , y) , head[x] = tot;
+		edge[ ++ tot] = node(head[y] , x) , head[y] = tot;
+	}
+	
+	void dfs_son(const int now , const int from)
+	{
+		dep[now] = dep[from] + 1 , fa[now] = from , siz[now] = 1;
+		v[dep[now]].push_back(now);
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			if(nex == from)	continue;
+			dfs_son(nex , now);
+			siz[now] += siz[nex];
+			if(siz[son[now]] < siz[nex])	son[now] = nex;
+		}
+	}
+	
+	void dfs_chain(const int now , const int from , const int tp)
+	{
+		dfn[now] = ++ tim , top[now] = tp , rev[tim] = now;
+		if(!son[now])	return;
+		dfs_chain(son[now] , now , tp);
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			if(nex == from || nex == son[now])	continue;
+			dfs_chain(nex , now , nex);
+		}
+	}
+	
+	inline int quickpow(ll x , ll y)
+	{
+		ll ret = 1;
+		while(y)
+		{
+			if(y & 1)	ret = ret * x % jzp;
+			x = x * x % jzp , y >>= 1;
+		}
+		return ret;
+	}
+	
+	struct Node
+	{
+		int l , r;
+		ll sum , tag;
+		Node(int a , int b)
+		{
+			l = a , r = b , tag = 1;
+		}
+		Node(){}
+	}tree[Max_n << 2];
+	
+	inline int add(const int x , const int y)
+	{
+		int ret = x + y;
+		if(ret >= jzp)
+			ret -= jzp;
+		return ret;
+	}
+	
+	inline void push_up(const int tr)
+	{
+		tree[tr].sum = add(tree[tr * 2].sum , tree[tr * 2 + 1].sum);
+	}
+	
+	inline void push_down(const int tr)
+	{
+		if(tree[tr].tag == 1)	return;
+		tree[tr * 2].tag = tree[tr * 2].tag * tree[tr].tag % jzp;
+		tree[tr * 2].sum = tree[tr * 2].sum * tree[tr].tag % jzp;
+		tree[tr * 2 + 1].tag = tree[tr * 2 + 1].tag * tree[tr].tag % jzp;
+//		tree[tr * 2 + 1].sum = tree[tr * 2 + 1].tag * tree[tr].tag % jzp;	bug
+		tree[tr * 2 + 1].sum = tree[tr * 2 + 1].sum * tree[tr].tag % jzp;
+		tree[tr].tag = 1;
+	}
+	
+	void build(const int l , const int r , const int tr)
+	{
+		tree[tr] = Node(l , r);
+		if(l == r)
+		{
+			tree[tr].sum = 1;
+			return;
+		}
+		int mid = (l + r) >> 1;
+		build(l , mid , tr * 2) , build(mid + 1 , r , tr * 2 + 1);
+		push_up(tr);
+	}
+	
+	void change(const int l , const int r , const int tr , const int val)
+	{
+		int ll = tree[tr].l , rr = tree[tr].r;
+		if(ll > r || rr < l)	return;
+//		if(ll <= l && rr <= r) bug
+		if(l <= ll && rr <= r)
+		{
+			tree[tr].sum = tree[tr].sum * val % jzp;
+			tree[tr].tag = tree[tr].tag * val % jzp;
+			return;
+		}
+		push_down(tr);
+		change(l , r , tr * 2 , val) , change(l , r , tr * 2 + 1 , val);
+		push_up(tr);
+	}
+	
+	int query(const int l , const int r , const int tr)
+	{
+		int ll = tree[tr].l , rr = tree[tr].r;
+		if(ll > r || rr < l)	return 0;
+//		if(ll <= l && rr <= r)	return tree[tr].sum; bug
+		if(l <= ll && rr <= r)	return tree[tr].sum;
+		push_down(tr);
+		return add(query(l , r , tr * 2) , query(l , r , tr * 2 + 1));
+	}
+	
+	inline void get_change(int x , int y , const int val)
+	{
+		while(top[x] != top[y])
+		{
+			if(dep[top[x]] < dep[top[y]])	swap(x , y);
+			change(dfn[top[x]] , dfn[x] , 1 , val);
+			x = fa[top[x]];
+		}
+		if(dfn[x] > dfn[y])	swap(x , y);
+		change(dfn[x] , dfn[y] , 1 , val);
+	}
+	
+	inline int get_query(int x , int y)
+	{
+		int ret = 0;
+		while(top[x] != top[y])
+		{
+			if(dep[top[x]] < dep[top[y]])	swap(x , y);
+			ret = add(ret , query(dfn[top[x]] , dfn[x] , 1));
+			x = fa[top[x]];
+		}
+		if(dfn[x] > dfn[y])	swap(x , y);
+		ret = add(ret , query(dfn[x] , dfn[y] , 1));
+		return ret;
+	}
+	
+	inline void main()
+	{
+		n = read();
+		inv100 = quickpow(100 , jzp - 2);
+		for(int i = 1 ; i <= n ; ++ i)
+			w[i] = 1ll * (100 - read()) * inv100 % jzp;
+		for(int i = 1 ; i < n ; ++ i)
+			add_edge(read() , read());
+		dfs_son(1 , 0);
+		dfs_chain(1 , 0 , 1);
+		build(1 , n , 1);
+		get_change(1 , 1 , w[1]);
+		for(int de = 2 ; de <= n ; ++ de)
+		{
+			int sz = v[de].size();
+			if(!sz)	break;
+			for(int i = 0 ; i < sz ; ++ i)
+				ans[v[de][i]] = get_query(1 , v[de][i]);
+			for(int i = 0 ; i < sz ; ++ i)
+				get_change(1 , v[de][i] , w[v[de][i]]);
+		}
+		puts("1");
+		for(int i = 2 ; i <= n ; ++ i)
+			printf("%d\n" , ans[i]);
+	}
+}
+
+int main()
+{
+	thecold::main();
+}
