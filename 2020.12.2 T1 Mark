@@ -1,0 +1,86 @@
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <algorithm>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	
+	inline ll read()
+	{
+		ll res = 0;
+		char c;
+		bool flag = false;
+		c = getchar();
+		while(!isdigit(c))
+		{
+			flag = (c == '-');
+			c = getchar();
+		}
+		while(isdigit(c))
+		{
+			res = res * 10 + (c ^ 48);
+			c = getchar();
+		}
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 1e6 + 5;
+	
+	int n , w[Max_n] , len;
+	
+	ll k , pre[Max_n] , cnt , ans;
+	
+	inline bool check(const int x)
+	{
+		ll sum = 0 , r = 0;
+		for(int l = 1 ; l <= n ; ++ l)
+		{
+			while(w[r] - w[l] <= x && r <= n)	++ r;
+			-- r;
+			sum += r - l;
+		}
+		return sum >= k;
+	}
+	
+	inline void main()
+	{
+		n = read() , k = read();
+		for(int i = 1 ; i <= n ; ++ i)
+			w[i] = read();
+		sort(w + 1 , w + n + 1);
+		int l = 0 , r = 1e8;
+		while(l <= r)
+		{
+			int mid = (l + r) >> 1;
+//			if(check(mid))
+//				len = mid , l = mid - 1;
+//			else r = mid + 1; bug
+			if(check(mid))
+				len = mid , r = mid - 1;
+			else l = mid + 1;
+		}
+		for(int i = 1 ; i <= n ; ++ i)
+			pre[i] = pre[i - 1] + w[i];
+		int qr = 0;
+		for(int ql = 1 ; ql <= n ; ++ ql)
+		{
+			while(w[qr] - w[ql] <= len && qr <= n)	++ qr;
+			-- qr;
+//			ans += pre[qr] - pre[ql] - (qr - ql) * pre[ql]; bug
+//			ans += pre[qr] - pre[ql] - (qr - ql) * w[ql]; bug!!!
+			ans += pre[qr] - pre[ql] - (ll)(qr - ql) * w[ql];
+			cnt += qr - ql;
+		}
+		ans -= (ll)len * (cnt - k);
+		printf("%lld\n" , ans);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
