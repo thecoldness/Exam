@@ -1,0 +1,98 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <cctype>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	
+	inline int read()
+	{
+		int res = 0; bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+			flag = (c == '-') , c = getchar();
+		while(isdigit(c))
+			res = res * 10 + (c ^ 48) , c = getchar();
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 5e5 + 5;
+	const int jzp = 998244353;
+	
+	int a[Max_n << 2] , n , f[Max_n << 2] , g[Max_n << 2];
+	int all , len , lim;
+	
+	inline int add(const int x , const int y)
+	{
+		int ret = x + y;
+		if(ret >= jzp) ret -= jzp;
+		return ret;
+	}
+	
+	inline int quickpow(ll x , ll y)
+	{
+		ll ret = 1;
+		while(y)
+		{
+			if(y & 1) ret = ret * x % jzp;
+			x = x * x % jzp , y >>= 1;
+		}
+		return ret;
+	}
+	
+	inline void prepare(const int lenth)
+	{
+		len = 1 , lim = 0;
+		while(len <= lenth) len <<= 1 , ++ lim;
+	}
+	
+	inline void FWT(int *w , const int opt)
+	{
+//		for(int i = 1 ; i < len ; ++ i)
+//			if(rev[i] > i)	swap(w[i] , w[rev[i]]);
+		for(int dep = 1 ; dep <= lim ; ++ dep)
+			for(int i = 0 ; i < len ; i += 1 << dep)
+				for(int j = 0 ; j < 1 << (dep - 1) ; ++ j)
+				{
+					int ui = w[i + j] , vi = w[i + j + (1 << (dep - 1))];
+					w[i + j] = add(ui , vi) , w[i + j + (1 << (dep - 1))] = add(ui , jzp - vi);
+				}
+		if(opt == -1)
+		{
+			int inv = quickpow(len , jzp - 2);
+			for(int i = 0 ; i < len ; ++ i)
+				w[i] = 1ll * w[i] * inv % jzp;
+		}
+	}
+	
+	inline void main()
+	{
+		n = read();
+		for(int i = 0 ; i < n ; ++ i)
+			a[i] = read() , all ^= a[i];
+		if(all == 0) {printf("%d\n" , n); return;}
+		for(int i = 0 ; i < n ; ++ i)
+			++ g[a[i]];
+		prepare(5e5);
+		f[0] = 1; FWT(g , 1);
+		for(int i = 1 ; i <= 19 ; ++ i)
+		{
+			FWT(f , 1);
+			for(int j = 0 ; j < len ; ++ j)
+//				f[i] = 1ll * f[i] * g[i] % jzp; bug
+				f[j] = 1ll * f[j] * g[j] % jzp;
+			FWT(f , -1);
+			if(f[all])
+			{printf("%d\n" , n - i); break;}
+		}
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
