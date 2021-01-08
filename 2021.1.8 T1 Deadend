@@ -1,0 +1,237 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0; bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+			flag = (c == '-') , c = getchar();
+		while(isdigit(c))
+			res = res * 10 + (c ^ 48) , c = getchar();
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 5e5 + 5;
+	
+	struct node
+	{
+		int nex , to;
+		node(int a , int b)
+		{
+			nex = a , to = b;
+		}
+		node(){}
+	}edge[Max_n << 1] , edge_s[Max_n << 1];
+	
+	int tot = 1 , n , m , head[Max_n] , fa[Max_n] , d[Max_n];
+	int siz[Max_n] , cnt[Max_n];
+	
+	int find(const int x)
+	{
+		return fa[x] == x ? x : fa[x] = find(fa[x]);
+	}
+	
+	inline void merge(const int x , const int y)
+	{
+		fa[find(x)] = find(y);
+	}
+	
+	inline void add_edge(const int x , const int y)
+	{
+		edge[ ++ tot] = node(head[x] , y) , head[x] = tot;
+		edge[ ++ tot] = node(head[y] , x) , head[y] = tot;
+		++ d[x] , ++ d[y]; merge(x , y);
+	}
+	
+	struct Node
+	{
+		int from , to;
+		Node(int a , int b)
+		{
+			from = a , to = b;
+		}
+		Node(){}
+	}s[Max_n] , ans[Max_n];
+	
+	int dfn[Max_n] , low[Max_n] , tim , tp_ans;
+	
+	bool iscut[Max_n << 1];
+	
+	void tarjan(const int now , const int from)
+	{
+		dfn[now] = low[now] = ++ tim;
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			if((i ^ 1) == from) continue;
+			int nex = edge[i].to;
+			if(!dfn[nex]) tarjan(nex , i) , low[now] = min(low[now] , low[nex]);
+			else low[now] = min(dfn[nex] , low[now]);
+			if(low[nex] > dfn[now]) iscut[i] = iscut[i ^ 1] = true;
+		}
+	}
+	
+	vector<int> v[Max_n];
+	
+	int col[Max_n] , head_s[Max_n] , tot_s , sym;
+	int top , siz_col[Max_n] , bian[Max_n] , tp_bian , val[Max_n];
+	
+	inline void dfs_s(const int now , const int co)
+	{
+		col[now] = co , ++ siz_col[co];
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			if(col[nex] || iscut[i]) continue;
+			dfs_s(nex , co);
+		}
+	}
+	
+	inline void add_edge_s(const int x , const int y)
+	{
+		edge_s[ ++ tot_s] = node(head_s[x] , y) , head_s[x] = tot_s;
+	}
+	
+	void dfs_new(const int now , const int from)
+	{
+		for(int i = head_s[now] ; i ; i = edge_s[i].nex)
+		{
+			int nex = edge_s[i].to;
+			if(nex == from)	continue;
+			dfs_new(nex , now);
+		}
+	}
+	
+//	inline int lca(int x , int y)
+//	{
+//		while(dep[x] > dep[y])
+//			x = tree_fa[logm[dep[x] - dep[y]]][x];
+//		while(dep[y] > dep[x])
+//			y = tree_fa[logm[dep[y] - dep[x]]][y];
+//		if(x == y)	return x;
+//		for(int i = logm[dep[x]] ; i >= 0 ; -- i)
+//		{
+//			if(tree_fa[i][x] == tree_fa[i][y]) continue;
+//			x = tree_fa[i][x] , y = tree_fa[i][y];
+//		}
+//		return tree_fa[0][x];
+//	}
+	
+	void dfs_sum(const int now , const int from)
+	{
+		for(int i = head_s[now] ; i ; i = edge_s[i].nex)
+		{
+			int nex = edge_s[i].to;
+			if(nex == from) continue;
+			dfs_sum(nex , now);
+			val[now] += val[nex];
+		}
+	}
+	
+	inline bool cmp_ans(Node a , Node b)
+	{
+		if(a.from != b.from) return a.from < b.from;
+		return a.to < b.to;
+	}
+	
+	bool tr[Max_n];
+	
+	inline void main()
+	{
+		n = read() , m = read();
+		for(int i = 1 ; i <= n ; ++ i)
+			fa[i] = i;
+		for(int i = 2 ; i <= n ; ++ i)
+			logm[i] = logm[i / 2] + 1;
+		for(int i = 1 ; i <= m ; ++ i)
+		{
+			int ui = read() , vi = read();
+			s[i] = Node(ui , vi) , add_edge(ui , vi);
+		}
+		for(int i = 1 ; i <= n ; ++ i)
+			++ siz[find(i)] , cnt[find(i)] += d[i] , v[find(i)].push_back(i);
+		for(int i = 1 ; i <= n ; ++ i)
+			cnt[i] /= 2;
+		for(int i = 1 ; i <= n ; ++ i)
+			if((find(i) == i) && (cnt[i] == siz[i] - 1) && (siz[i] != 1)) tr[i] = true;
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			if(!tr[find(i)]) continue;
+			if(d[i] == 1)
+				ans[ ++ tp_ans] = Node(i , edge[head[i]].to);
+		}
+		for(int i = 1 ; i <= n ; ++ i)
+			if((find(i) == i) && (cnt[i] > siz[i] - 1) && (siz[i] != 1))
+			{
+				tp_bian = 0;
+				tarjan(i , 0); int sz = v[i].size();
+				for(int j = 0 ; j < sz ; ++ j)
+					if(!col[v[i][j]]) 
+					{
+//						dfs_s(j , ++ sym);bug
+						dfs_s(v[i][j] , ++ sym); 
+						if(siz_col[sym] > 1) bian[ ++ tp_bian] = sym;
+					}
+				for(int j = 0 ; j < sz ; ++ j)
+					for(int k = head[v[i][j]] ; k ; k = edge[k].nex)
+					{
+						int nex = edge[k].to;
+//						if(col[i] != col[nex]) add_edge_s(col[i] , col[nex]); bug
+						if(col[v[i][j]] != col[nex]) 
+							add_edge_s(col[v[i][j]] , col[nex]);
+					}
+//				dfs_new(1 , 0); bug
+//				dfs_new(sym , 0);
+//				sort(bian + 1 , bian + tp_bian + 1 , cmp_bain);
+				val[bian[1]] = 1; 
+				if(tp_bian == 1)
+					continue;
+				dfs_new(bian[1] , 0);
+				for(int j = 2 ; j <= tp_bian ; ++ j)
+				{
+//					int l = lca(bian[j - 1] , bian[j]);
+//					++ val[bian[j]] , ++ val[bian[j - 1]] , -- val[l] , -- val[tree_fa[0][l]];
+					++ val[bian[j]] , -- val[bian[1]];
+				}
+//				dfs_sum(1 , 0); tp_bian = 0; bug
+//				dfs_sum(sym , 0); tp_bian = 0; bug
+				dfs_sum(bian[1] , 0);
+			}
+		for(int i = 1 ; i <= m ; ++ i)
+		{
+			int from = s[i].from , to = s[i].to;
+			if(val[col[from]] && ! val[col[to]]) ans[ ++ tp_ans] = Node(from , to);
+			if(val[col[to]] && ! val[col[from]]) ans[ ++ tp_ans] = Node(to , from);
+		}
+		sort(ans + 1 , ans + tp_ans + 1 , cmp_ans);
+		printf("%d\n" , tp_ans);
+		for(int i = 1 ; i <= tp_ans ; ++ i)
+			printf("%d %d\n" , ans[i].from , ans[i].to);
+	}
+}
+
+int main()
+{
+//	freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
+/*
+7 7
+2 7
+6 7
+1 7
+1 2
+5 4
+5 3
+3 4
+ans:
+1
+7 6
+*/
