@@ -1,0 +1,136 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <vector>
+#include <cctype>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	
+	inline int read()
+	{
+		int res = 0; bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+			flag = (c == '-') , c = getchar();
+		while(isdigit(c))
+			res = res * 10 + (c ^ 48) , c = getchar();
+		return !flag ? res : -res;
+	}
+	
+	const int jzp = 1e9 + 7;
+	const int Max_n = 1e3 + 5;
+	const int Max_q = 5e5 + 5;
+	
+	inline int quickpow(ll x , ll y)
+	{
+		ll ret = 1;
+		while(y)
+		{
+			if(y & 1) ret = ret * x % jzp;
+			x = x * x % jzp , y >>= 1;
+		}
+		return ret;
+	}
+	
+	vector<int> v[Max_n] , up;
+	
+	bool lst[Max_q] , vis[Max_q];
+	
+	inline int add(const int x , const int y)
+	{
+		int ret = x + y;
+		if(ret >= jzp) ret -= jzp;
+		return ret;
+	}
+	
+	int n , m , q , lsh[Max_q] , tot , len;
+	int mi[Max_q];
+	
+	struct node
+	{
+		int type , ri , ci;
+		node(int a)
+		{
+			type = a;
+		}
+		node(int a , int b , int c)
+		{
+			type = a , ri = b , ci = c , lsh[ ++ tot] = ci;
+		}
+		node(){}
+	}s[Max_q];
+	
+	inline int find(const int x)
+	{
+		return lower_bound(lsh + 1 , lsh + len , x) - lsh;
+	}
+	
+	inline void work()
+	{
+		int ans = 0 , tmp = 0;
+		memset(vis , false , sizeof(vis)) , memset(lst , false , sizeof(lst)) , up.clear();
+		for(int hang = 1 ; hang <= n ; ++ hang)
+		{
+//			int sz = v[hang].size() , pos = 0 , cho = m + 1;bug
+			int sz = v[hang].size() , pos = 0 , cho = m + 10;
+			for(int i = 0 ; i < sz ; ++ i)
+				vis[v[hang][i]] ^= 1;
+			sz = up.size();
+			for(int i = 0 ; i < sz ; ++ i)
+				if(!vis[up[i]]) 
+				{	pos = up[i]; break;}
+			sz = v[hang].size();
+			for(int i = 0 ; i < sz ; ++ i)
+				if(vis[v[hang][i]] && !lst[v[hang][i]] && v[hang][i] > pos) cho = min(cho , v[hang][i]);
+			if(cho == m + 10) {puts("-1"); return;} sz = up.size();
+			for(int i = sz - 1 ; i >= 0 ; -- i)
+//				if(up[i] <= cho) tmp = add(tmp , jzp - mi[up[i]]) , up.pop_back(); bug
+				if(up[i] <= cho) tmp = add(tmp , jzp - mi[up[i]]) , lst[up[i]] = false , up.pop_back();
+			tmp = add(tmp , mi[cho]) , lst[cho] = true , up.push_back(cho) , sz = v[hang].size();
+			for(int i = 0 ; i < sz ; ++ i)
+				vis[v[hang][i]] = false;
+			ans = add(ans , tmp);
+		}
+		printf("%d\n" , ans);
+	}
+	
+	inline void main()
+	{
+		n = read() , m = read() , q = read();
+		for(int i = 1 ; i <= q ; ++ i)
+		{
+			int type = read();
+			if(type == 2)	s[i] = node(2);
+			else
+			{
+				int ui = read() , vi = m - read(); s[i] = node(1 , ui , vi);
+			}
+		}
+		sort(lsh + 1 , lsh + tot + 1) , len = unique(lsh + 1 , lsh + tot + 1) - lsh;
+		for(int i = 1 ; i < len ; ++ i)
+			mi[i] = quickpow(2 , lsh[i]);
+		for(int i = 1 ; i <= q ; ++ i)
+			if(s[i].type == 1) s[i].ci = find(s[i].ci);
+		for(int i = 1 ; i <= q ; ++ i)
+			if(s[i].type == 1) v[s[i].ri].push_back(s[i].ci);
+			else work();
+	}
+}
+
+int main()
+{
+//	freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
+/*
+3 2 5
+1 1 2
+1 3 1
+1 3 2
+1 2 1
+2
+*/
