@@ -1,0 +1,157 @@
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <algorithm>
+#include <cassert>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0; bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+			flag = (c == '-') , c = getchar();
+		while(isdigit(c))
+			res = res * 10 + (c ^ 48) , c = getchar();
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 1e6 + 2e5 + 5;
+	
+	struct node
+	{
+		int op , ui , vi;
+		node(int a , int b , int c)
+		{
+			op = a , ui = b , vi = c;
+		}
+		node(int a , int b)
+		{
+			op = a , ui = b;
+		}
+		node(){}
+	}opt[Max_n];
+	
+	struct Node
+	{
+		int nex , to;
+		Node(int a , int b)
+		{
+			nex = a , to = b;
+		}
+		Node(){}
+	}edge[Max_n];
+	
+	int n , m , head[Max_n] , tot , ans[Max_n] , tp , sum;
+	int fa[Max_n << 1] , id[Max_n] , siz[Max_n << 1] , real_siz[Max_n << 1];
+	
+	inline void add_edge(const int x , const int y)
+	{
+		edge[ ++ tot] = Node(head[x] , y) , head[x] = tot;
+	}
+	
+	inline int find(const int x)
+	{
+		int ret = x;
+		while(fa[ret] ^ ret) ret = fa[ret];
+		return ret;
+	}
+	
+	struct ctrl_z
+	{
+		int fx , fy , rsx , rsy , sx , sy;
+		ctrl_z(int fxi , int fyi , int rsxi , int rsyi , int sxi , int syi)
+		{
+			fx = fxi , fy = fyi , rsx = rsxi , rsy = rsyi , sx = sxi , sy = syi;
+		}
+		ctrl_z(){}
+	}st[Max_n << 1];
+	
+	inline void merge(const int x , const int y)
+	{
+		int fx = find(x) , fy = find(y);
+//		st[ ++ tp] = ctrl_z(fx , fy , real_siz[x] , real_siz[y] , siz[x] , siz[y]); bug
+		st[ ++ tp] = ctrl_z(fx , fy , real_siz[fx] , real_siz[fy] , siz[fx] , siz[fy]);
+		assert(tp <= 2 * n);
+		if(fx == fy) return;
+		if(real_siz[fx] > real_siz[fy]) swap(fx , fy);
+		real_siz[fy] += real_siz[fx] , siz[fy] += siz[fx] , fa[fx] = fy;
+	}
+	
+	inline void recover()
+	{
+		fa[st[tp].fx] = st[tp].fx , fa[st[tp].fy] = st[tp].fy , siz[st[tp].fx] = st[tp].sx , siz[st[tp].fy] = st[tp].sy;
+		real_siz[st[tp].fx] = st[tp].rsx , real_siz[st[tp].fy] = st[tp].rsy , -- tp;
+	}
+	
+	void dfs_tree(const int now)
+	{
+		int ui = opt[now].ui , vi = opt[now].vi , tmpu = id[ui] , tmpv = id[vi] , tag = 0;
+		if(opt[now].op == 1 && id[ui] && id[vi])	merge(id[ui] , id[vi]);
+		if(opt[now].op == 2)
+		{
+			if(id[ui]) ans[now] = siz[find(id[ui])];
+			else ans[now] = -1;
+		}
+		if(opt[now].op == 3)
+		{
+			if(id[ui] && id[vi]) ans[now] = (find(id[ui]) == find(id[vi]));
+			else ans[now] = -1;
+		}
+		if(opt[now].op == 4 && id[ui])	-- siz[find(id[ui])] , id[ui] = 0;
+		if(opt[now].op == 5 && id[ui] && id[vi])
+		{
+			if(find(id[ui]) == find(id[vi]))	tag = 1;
+			else 
+			{
+				-- siz[find(id[ui])] , id[ui] = ++ sum , fa[id[ui]] = id[ui];
+				siz[id[ui]] = real_siz[id[ui]] = 1 , merge(id[ui] , id[vi]);
+				assert(sum <= 2 * n);
+			}
+		}
+		for(int i = head[now] ; i ; i = edge[i].nex)
+			dfs_tree(edge[i].to);
+		if(opt[now].op == 1 && tmpu && tmpv) recover();
+		if(opt[now].op == 4 && tmpu) id[ui] = tmpu , ++ siz[find(id[ui])];
+		if(opt[now].op == 5 && tmpu && tmpv && !tag)
+		{
+			recover() , real_siz[id[ui]] = siz[id[ui]] = 0 , fa[id[ui]] = 0;
+			-- sum , id[ui] = tmpu , ++ siz[find(id[ui])];
+		}
+	}
+	
+	inline void main()
+	{
+		sum = n = read() , m = read();
+		for(int i = 1 ; i <= n ; ++ i)
+			fa[i] = i , id[i] = i , siz[i] = real_siz[i] = 1;
+		for(int i = 1 ; i <= m ; ++ i)
+		{
+			int op = read() , ki = read(); add_edge(ki , i);
+			int ui , vi;
+			if(op % 2) 	ui = read() , vi = read() , opt[i] = node(op , ui , vi);
+			else ui = read() , opt[i] = node(op , ui);
+		}
+		dfs_tree(0);
+		for(int i = 1 ; i <= m ; ++ i)
+			if(opt[i].op == 2)
+			{
+				if(ans[i] == -1) puts("Ywy");
+				else printf("%d\n" , ans[i]);
+			}
+			else if(opt[i].op == 3)
+			{
+				if(ans[i] == -1) puts("Ywy");
+				else if(ans[i] == 0) puts("No");
+				else puts("Yes");
+			}
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
