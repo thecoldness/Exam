@@ -1,0 +1,154 @@
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <algorithm>
+#include <set>
+#include <vector>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0 ; bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+			flag = (c == '-') , c = getchar();
+		while(isdigit(c))
+			res = res * 10 + (c ^ 48) , c = getchar();
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 1e5 + 5;
+	
+	struct node
+	{
+		int xi , yi , col;
+		node(int a , int b , int c)
+		{
+			xi = a , yi = b , col = c;
+		}
+		node(){}
+		bool operator < (const node &a)const
+		{
+			if(xi != a.xi) return xi < a.xi;
+			return yi < a.yi;
+		}
+	}e[Max_n];
+	
+	set<node> s[Max_n];
+	
+	typedef set<node>::iterator iter;
+	
+	vector<int> v[Max_n];
+	
+	int t , n , k , lshx[Max_n] , lshy[Max_n];
+	int lenx , leny , ans , bit[Max_n];
+	
+	inline int lowbit(const int x)
+	{
+		return x & -x;
+	}
+	
+	inline void insert(const int pos , const int val)
+	{
+		for(int i = pos ; i <= lenx ; i += lowbit(i))
+			bit[i] += val;	
+	}
+	
+	inline int query(const int pos)
+	{
+		int ret = 0;
+		for(int i = pos ; i ; i -= lowbit(i))
+			ret += bit[i];
+		return ret;
+	}
+	
+	bool vis[Max_n];
+	
+	inline void work()
+	{
+		memset(bit , 0 , sizeof(bit));
+		for(int i = 1 ; i <= leny ; ++ i)	v[i].clear();
+		for(int i = 1 ; i <= k ; ++ i)	s[i].clear();
+		for(int i = 1 ; i <= n ; ++ i)
+			insert(e[i].xi , 1) , s[e[i].col].insert(e[i]) , v[e[i].yi].push_back(i);
+		for(int i = 1 ; i <= k ; ++ i)
+		{
+			s[i].insert(node(0 , 0 , i)) , s[i].insert(node(lenx , 0 , i));
+			iter it = s[i].begin() , lst = s[i].begin(); ++ it;
+			while(it != s[i].end())
+			{
+				if(it->xi != lst->xi)	ans = max(ans , query(it->xi - 1) - query(lst->xi));
+				++ it , ++ lst;
+			}
+		}
+//		for(int h = lenx ; h ; -- h)// heightbug
+		for(int h = leny ; h ; -- h) 
+		{
+			int sz = v[h].size() , id; iter it , lst;
+			for(int i = 0 ; i < sz ; ++ i)
+				insert(e[v[h][i]].xi , -1);// bug
+			for(int i = 0 ; i < sz ; ++ i)
+			{
+				id = v[h][i]; it = s[e[id].col].find(e[id]);
+				if(it == s[e[id].col].end()) continue;// bug
+//				insert(e[id].xi , -1) , s[e[id].col].erase(it ++); bug
+				s[e[id].col].erase(it ++);	lst = -- it , ++ it; 
+				if(it->xi != lst->xi)	ans = max(ans , query(it->xi - 1) - query(lst->xi));
+			}
+		}
+	}
+	
+	inline void main()
+	{
+		t = read();
+		while(t --)
+		{
+			memset(vis , false , sizeof(vis)) , ans = 0;
+			n = read() , k = read(); bool hav = false;
+			for(int i = 1 ; i <= n ; ++ i)
+			{
+				int ui = read() , vi = read() , ti = read(); vis[ti] = true;
+				lshx[i] = ui , lshy[i] = vi; e[i] = node(ui , vi , ti);
+			}
+			for(int i = 1 ; i <= k ; ++ i)
+				if(!vis[i]) {printf("%d\n" , n) , hav = true; break;}
+			if(hav) continue;
+			sort(lshx + 1 , lshx + n + 1) , lenx = unique(lshx + 1 , lshx + n + 1) - lshx;
+			sort(lshy + 1 , lshy + n + 1) , leny = unique(lshy + 1 , lshy + n + 1) - lshy;
+			for(int i = 1 ; i <= n ; ++ i)
+				e[i].xi = lower_bound(lshx + 1 , lshx + lenx , e[i].xi) - lshx,
+				e[i].yi = lower_bound(lshy + 1 , lshy + leny , e[i].yi) - lshy;
+			work();
+			for(int i = 1 ; i <= n ; ++ i)	e[i].yi = leny - e[i].yi;
+			work();
+			printf("%d\n" , ans);
+		}
+	}
+}
+
+int main()
+{
+//	freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
+/*
+1
+5 2
+4 1 1
+5 2 2
+4 2 2
+5 5 2
+1 1 2
+ans = 3
+1
+5 2
+5 4 1
+5 1 2
+5 5 1
+3 2 1
+1 3 1
+ans = 4
+*/
