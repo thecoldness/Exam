@@ -1,0 +1,161 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <cassert>
+#include <algorithm>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0; bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+			flag = (c == '-') , c = getchar();
+		while(isdigit(c))
+			res = res * 10 + (c ^ 48) , c = getchar();
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 5e5 + 5;
+	
+	int bit[Max_n << 1] , n , son[Max_n][2] , val[Max_n] , tag[Max_n] , tp , sum;
+	int fa[Max_n] , siz[Max_n] , m , tot , head[Max_n] , rev[Max_n] , st[Max_n];
+	
+	inline int lowbit(const int x)
+	{
+		return x & -x;
+	}
+	
+	inline void add(const int x , const int val)
+	{
+		for(int i = x ; i <= n + m ; i += lowbit(i))
+			bit[i] += val;
+	}
+	
+	inline int query(const int x)
+	{
+		int ret = 0;
+		for(int i = x ; i ; i -= lowbit(i))
+			ret += bit[i];
+		return ret;
+	}
+	
+	struct node
+	{
+		int nex , to;
+		node(int a , int b)
+		{
+			nex = a , to = b;
+		}
+		node(){}
+	}edge[Max_n << 1];
+	
+	inline void add_edge(const int x , const int y)
+	{
+		edge[ ++ tot] = node(head[x] , y) , head[x] = tot;
+		edge[ ++ tot] = node(head[y] , x) , head[y] = tot;
+	}
+	
+	void dfs_tree(const int now , const int from)
+	{
+		val[now] = now , siz[now] = 1 , fa[now] = from;
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to; if(nex == from) continue;
+			dfs_tree(nex , now);
+			if(val[nex] > val[now])
+				val[now] = val[nex] , siz[now] = siz[nex] + 1 , son[now][1] = nex;
+		}
+		add(val[now] , 1);
+	}
+	
+	inline bool isroot(const int x)
+	{
+//		return (son[fa[x]][1] == x) || (son[fa[x]][0] == x); bug
+		return (son[fa[x]][1] != x) && (son[fa[x]][0] != x);
+	}
+	
+	inline void push_down(const int now)
+	{
+		assert(now);
+		if(tag[now])	val[son[now][0]] = tag[now] , val[son[now][1]] = tag[now] , tag[son[now][0]] = tag[son[now][1]] = tag[now] , tag[now] = 0;
+		if(rev[now])	swap(son[now][0] , son[now][1]) , rev[son[now][0]] ^= 1 , rev[son[now][1]] ^= 1 , rev[now] = 0;
+	}
+	
+	inline void push_up(const int now)
+	{
+		siz[now] = siz[son[now][0]] + siz[son[now][1]] + 1;
+	}
+	
+	inline void rotate(const int x)
+	{
+		int fx = fa[x] , ffx = fa[fx];
+		if(!isroot(fx)) son[ffx][fx == son[ffx][1]] = x;
+		bool type = (x == son[fx][1]);
+//		fa[fx] = x , fa[son[x][!type]] = x , fa[x] = ffx; bug
+		fa[fx] = x , fa[son[x][!type]] = fx , fa[x] = ffx;
+		son[fx][type] = son[x][!type] , son[x][!type] = fx;
+		push_up(fx) , push_up(x);// bug
+	}
+	
+	inline void splay(int x)
+	{
+		int tmp = x;
+		while(!isroot(tmp)) st[ ++ tp] = tmp , tmp = fa[tmp]; st[ ++ tp] = tmp;
+		while(tp) push_down(st[tp --]);
+		while(!isroot(x))
+		{
+			int fx = fa[x] , ffx = fa[fx];
+			if(!isroot(fx))	rotate((son[ffx][1] == fx) ^ (son[fx][1] == x) ? x : fx);
+			rotate(x);
+		}
+	}
+	
+	inline int query_ans(const int x)
+	{
+		return splay(x) , query(val[x]) - siz[son[x][0]];
+	}
+	
+	inline void access(int x)
+	{
+//		for(int y = 0 ; !isroot(x) ; x = fa[y = x]) bug
+//		for(int y = 0 ; !isroot(y) ; x = fa[y = x]) bug
+		for(int y = 0 ; x ; x = fa[y = x])
+		{
+			splay(x) , son[x][1] = 0 , push_up(x) , add(val[x] , -siz[x]);
+			add(sum , siz[x]) , son[x][1] = y , push_up(x);
+		}
+	}
+	
+	inline void make_root(const int x)
+	{
+		++ sum , access(x) , splay(x) , val[x] = tag[x] = sum , rev[x] ^= 1;
+	}
+	
+	char opt[5];
+	
+	inline void main()
+	{
+		sum = n = read() , m = read();
+		for(int i = 1 ; i < n ; ++ i)
+			add_edge(read() , read());
+		dfs_tree(n , 0);
+		for(int i = 1 ; i <= m ; ++ i)
+		{
+			scanf("%s" , opt + 1); int pos = read();
+			if(opt[1] == 'Q')	printf("%d\n" , query_ans(pos));
+			else make_root(pos);
+		}
+//		for(int i = 1 ; i <= n + m ; ++ i)
+//			printf("%d " , query(i));
+	}
+}
+
+int main()
+{
+//	freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
