@@ -1,0 +1,154 @@
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <algorithm>
+#include <iostream>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	
+	inline int read()
+	{
+		int res = 0; bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+			c = getchar();
+		while(isdigit(c))
+			res = res * 10 + (c ^ 48) , c = getchar();
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 5e5 + 5;
+	
+	struct node
+	{
+		int l , r; ll tag , maxn;
+		node(int a , int b)
+		{
+			l = a , r = b , tag = maxn = 0;
+		}
+		node(){}
+	}tree[Max_n << 2];
+	
+	int a[Max_n] , x[Max_n] , b[Max_n] , y[Max_n] , reva[Max_n << 1] , revb[Max_n << 1];
+	int n , m , rev[Max_n] , tpl , tpr;
+	
+	ll sumx[Max_n] , sumy[Max_n] , ans;
+	
+	inline void push_up(const int tr)
+	{
+		tree[tr].maxn = max(tree[tr * 2].maxn , tree[tr * 2 + 1].maxn);
+	}
+	
+	inline void push_down(const int tr)
+	{
+		if(tree[tr].tag == 0) return; ll tmp = tree[tr].tag;tree[tr].tag = 0;
+		tree[tr * 2].maxn += tmp , tree[tr * 2 + 1].maxn += tmp;
+		tree[tr * 2].tag += tmp , tree[tr * 2 + 1].tag += tmp;
+	}
+	
+	inline void build(const int l , const int r , const int tr , const ll all)
+	{
+		tree[tr] = node(l , r);
+		if(l == r) return tree[tr].maxn = all - sumy[l - 1] , void();
+		int mid = (l + r) >> 1;
+		build(l , mid , tr * 2 , all) , build(mid + 1 , r , tr * 2 + 1 , all) , push_up(tr);
+	}
+	
+//	inline void change(const int l , const int r , const int tr , const int val) bug
+	inline void change(const int l , const int r , const int tr , const ll val)
+	{
+		int ll = tree[tr].l , rr = tree[tr].r;
+		if(ll > r || rr < l) return;
+		if(l <= ll && rr <= r)	return tree[tr].tag += val , tree[tr].maxn += val , void();
+		push_down(tr) , change(l , r , tr * 2 , val) , change(l , r , tr * 2 + 1 , val) , push_up(tr);
+	}
+	
+	inline ll query(const int l , const int r , const int tr)
+	{
+		int ll = tree[tr].l , rr = tree[tr].r;
+		if(ll > r || rr < l) return 0;
+		if(l <= ll && rr <= r) return tree[tr].maxn;
+		return push_down(tr) , max(query(l , r , tr * 2) , query(l , r , tr * 2 + 1));
+	}
+	
+	struct Node
+	{
+		int l , r; ll pos;
+		Node(int a , int b , ll c)
+		{
+			l = a , r = b , pos = c;
+		}
+		Node(){}
+	}stl[Max_n] , str[Max_n];
+	
+	inline void solve(const int lenx , const int leny)
+	{
+		build(1 , leny , 1 , sumx[lenx]); tpl = tpr = 0;
+//		int lim = sumx[lower_bound(sumx + 1 , sumx + lenx + 1 , sumx[lenx] / 2) - sumx]; bug
+		ll lim = sumx[lower_bound(sumx + 1 , sumx + lenx + 1 , sumx[lenx] / 2) - sumx];
+		for(int i = 1 ; i <= leny ; ++ i)
+		{
+			int pos = rev[i] , lstl = i; stl[ ++ tpl] = Node(i , i , 0) , str[ ++ tpr] = Node(i , i , sumx[lenx]);
+			if(pos == 0) { ans = max(ans , sumy[i] + query(1 , i , 1)); continue; }
+			if(sumx[pos] <= lim)
+			{
+//				while(tpl && (stl[tpl].pos <= sumx[pos]))	lstl = stl[tpl].l , change(stl[tpl].l , stl[tpl].r , 1 , - lim + stl[tpl].pos) , -- tpl;
+//				stl[ ++ tpl] = Node(lstl , i , sumx[pos]); change(stl[tpl].l , stl[tpl].r , 1 , lim - stl[tpl].pos);TLE
+				while(tpl && (stl[tpl].pos <= sumx[pos]))	lstl = stl[tpl].l , change(stl[tpl].l , stl[tpl].r , 1 , stl[tpl].pos - sumx[pos]) , -- tpl;
+				stl[ ++ tpl] = Node(lstl , i , sumx[pos]);		
+			}
+			else
+			{
+////				while(tpr && (str[tpr].pos >= sumx[pos - 1])) lstl = stl[tpr].l , change(str[tpr].l , str[tpr].r , 1 , lim - str[tpr].pos) , -- tpr; bug
+//				while(tpr && (str[tpr].pos >= sumx[pos - 1])) lstl = str[tpr].l , change(str[tpr].l , str[tpr].r , 1 , lim - str[tpr].pos) , -- tpr;
+////				str[ ++ tpr] = Node(lstl , i , sumx[pos]); bug
+//				str[ ++ tpr] = Node(lstl , i , sumx[pos - 1]); change(str[tpr].l , str[tpr].r , 1 , str[tpr].pos - lim); TLE
+				while(tpr && (str[tpr].pos >= sumx[pos - 1])) lstl = str[tpr].l , change(str[tpr].l , str[tpr].r , 1 , sumx[pos - 1] - str[tpr].pos) , -- tpr;
+				str[ ++ tpr] = Node(lstl , i , sumx[pos - 1]);
+			}
+//			ans = max(ans , sumy[i] + query(1 , i , 1));
+			ans = max(ans , sumy[i] + tree[1].maxn);
+		}
+	}
+	
+	inline void debug()
+	{
+		for(int i = 1 ; i <= n ; ++ i)	printf("%lld " , sumx[i]); puts("");
+		for(int i = 1 ; i <= m ; ++ i)	printf("%lld " , sumy[i]);puts("");
+		for(int i = 1 ; i <= m ; ++ i)	printf("%d " , rev[i]);puts("");
+	}
+	
+	inline void main()
+	{
+//		ios::sync_with_stdio(false);
+		n = read() , m = read();
+//		cin >> n >> m;
+		for(int i = 1 ; i <= n ; ++ i)	a[i] = read() , reva[a[i]] = i;
+		for(int i = 1 ; i <= n ; ++ i)	x[i] = read();
+		for(int i = 1 ; i <= m ; ++ i)	b[i] = read() , revb[b[i]] = i;
+		for(int i = 1 ; i <= m ; ++ i)	y[i] = read();
+//		for(int i = 1 ; i <= n ; ++ i)	cin >> a[i] , reva[a[i]] = i;
+//		for(int i = 1 ; i <= n ; ++ i)	cin >> x[i];
+//		for(int i = 1 ; i <= m ; ++ i)	cin >> b[i] , revb[b[i]] = i;
+//		for(int i = 1 ; i <= m ; ++ i)	cin >> y[i];
+		for(int i = 1 ; i <= n ; ++ i)	sumx[i] = sumx[i - 1] + x[i];
+		for(int i = 1 ; i <= m ; ++ i)	sumy[i] = sumy[i - 1] + y[i] , rev[i] = reva[b[i]];
+//		debug();
+		ans = max(sumx[n] , sumy[m]);
+		solve(n , m);
+		for(int i = 1 ; i <= m ; ++ i)	sumx[i] = sumx[i - 1] + y[i];
+		for(int i = 1 ; i <= n ; ++ i)	sumy[i] = sumy[i - 1] + x[i] , rev[i] = revb[a[i]];
+		solve(m , n);
+		printf("%lld\n" , ans);
+	}
+}
+
+signed main()
+{
+//	freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
