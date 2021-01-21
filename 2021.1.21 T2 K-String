@@ -1,0 +1,128 @@
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <queue>
+#include <algorithm>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+	
+	inline int read()
+	{
+		int res = 0; bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+			flag = (c == '-') , c = getchar();
+		while(isdigit(c))
+			res = res * 10 + (c ^ 48) , c = getchar();
+		return !flag ? res : -res;
+	}
+	
+	const int Max_n = 1e5 + 5; const ll INF = 1e18;
+	const int Max_dot = 1e7 + 5;
+	
+	int son[Max_dot][2] , n , k , lsh[Max_n];
+	int root[Max_n] , a[Max_n] , tot , len , lst[Max_n];
+	
+	ll tag[Max_dot];
+	
+	struct node
+	{
+		int pos; ll val;
+		node(int a , ll b)
+		{
+			pos = a , val = b;
+		}
+		node(){}
+		bool operator < (const node &a) const
+		{
+			return val < a.val;
+		}
+	}mx[Max_dot];
+	
+	node operator + (node a , ll b)
+	{
+		return node(a.pos , a.val + b);
+	}
+	
+	inline void push_up(const int now)
+	{
+		mx[now] = max(mx[son[now][0]] , mx[son[now][1]]) + tag[now];
+	}
+	
+	void build(int &now , const int l , const int r)
+	{
+		now = ++ tot; if(l == r) return mx[now] = node(l , 0) , void();
+		int mid = (l + r) >> 1;
+		build(son[now][0] , l , mid) , build(son[now][1] , mid + 1 , r) , push_up(now);
+	}
+	
+	inline int find(const int x)
+	{
+		return lower_bound(lsh + 1 , lsh + len , x) - lsh;
+	}
+	
+	void add(const int lst , int &now , const int l , const int r , const int ll , const int rr , const int val)
+	{
+		if(ll > r || rr < l) return now = lst , void(); now = ++ tot;
+		if(ll == rr) return mx[now] = mx[lst] + val , void();// bug
+		if(l <= ll && rr <= r) return tag[now] = tag[lst] + val , son[now][0] = son[lst][0] , son[now][1] = son[lst][1] , push_up(now);
+		int mid = (ll + rr) >> 1; tag[now] = tag[lst];// bug	
+		add(son[lst][0] , son[now][0] , l , r , ll , mid , val) , add(son[lst][1] , son[now][1] , l , r , mid + 1 , rr , val) , push_up(now);
+	}
+	
+	inline node query(const int now , const int l , const int r , const int ll , const int rr)
+	{
+		if(ll > r || rr < l) return node(0 , -INF); if(l <= ll && rr <= r) return mx[now];
+		int mid = (ll + rr) >> 1;
+//		return max(query(son[now][0] , l , r , ll , mid) , query(son[now][1] , l , r , mid + 1 , rr)); bug
+		return max(query(son[now][0] , l , r , ll , mid) , query(son[now][1] , l , r , mid + 1 , rr)) + tag[now];
+	}
+	
+	struct God
+	{
+		int pos , bel , l , r; ll val;
+		God(int a , int b , int c , int d , ll e)
+		{
+			pos = a , bel = b , l = c , r = d , val = e;
+		}
+		God(){}
+		bool operator < (const God &a) const
+		{
+			return val < a.val;
+		}
+	};
+	
+	priority_queue<God> zzz;
+	
+	inline void main()
+	{
+		n = read() , k = read();
+		for(int i = 1 ; i <= n ; ++ i) a[i] = lsh[i] = read();
+		build(root[0] , 1 , n); sort(lsh + 1 , lsh + n + 1) , len = unique(lsh + 1 , lsh + n + 1) - lsh;
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			a[i] = find(a[i]);
+			add(root[i - 1] , root[i] , lst[a[i]] + 1 , i , 1 , n , lsh[a[i]]) , lst[a[i]] = i;
+			node tmp = query(root[i] , 1 , i , 1 , n); zzz.push(God(tmp.pos , i , 1 , i , tmp.val));
+		}
+		for(int i = 1 ; i < k ; ++ i)
+		{
+			God now = zzz.top(); zzz.pop(); node tmp;
+			if(now.pos - 1 >= now.l)
+				tmp = query(root[now.bel] , now.l , now.pos - 1 , 1 , n) , zzz.push(God(tmp.pos , now.bel , now.l , now.pos - 1 , tmp.val));
+			if(now.pos + 1 <= now.r)
+				tmp = query(root[now.bel] , now.pos + 1 , now.r , 1 , n) , zzz.push(God(tmp.pos , now.bel , now.pos + 1 , now.r , tmp.val));
+		}
+		printf("%lld\n" , zzz.top().val);
+	}
+}
+
+int main()
+{
+//	freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
