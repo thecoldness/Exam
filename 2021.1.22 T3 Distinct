@@ -1,0 +1,202 @@
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <cstdio>
+#include <algorithm>
+#include <cmath>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0; bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+			flag = (c == '-') , c = getchar();
+		while(isdigit(c))
+			res = res * 10 + (c ^ 48) , c = getchar();
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 1e5 + 5;
+
+	struct node
+	{
+		int nex , to;
+		node(int a , int b)
+		{
+			nex = a , to = b;
+		}
+		node(){}
+	}edge[Max_n << 1];
+
+	int head[Max_n] , n , q , a[Max_n] , dfnin[Max_n] , base , lst[Max_n];
+	int rev[Max_n << 1] , dfnout[Max_n] , tim , tot , ans[Max_n];
+	int logm[Max_n] , fa[Max_n][20] , dep[Max_n] , cnt , len , lsh[Max_n << 1];
+
+	inline void add_edge(const int x , const int y)
+	{
+		edge[ ++ tot] = node(head[x] , y) , head[x] = tot;
+		edge[ ++ tot] = node(head[y] , x) , head[y] = tot;
+	}
+
+	void dfs_tree(const int now , const int from)
+	{
+		dfnin[now] = ++ tim , rev[tim] = now , dep[now] = dep[from] + 1;
+		fa[now][0] = from;
+		for(int i = 1 ; i <= logm[dep[now]] ; ++ i)
+			fa[now][i] = fa[fa[now][i - 1]][i - 1];
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to; if(nex == from) continue;
+			dfs_tree(nex , now);
+		}
+		dfnout[now] = ++ tim , rev[tim] = now;
+	}
+
+	struct Node
+	{
+		int lst , pos , col;
+		Node(int a , int b , int c)
+		{
+			lst = a , pos = b , col = c;
+		}
+		Node(){}
+	}opt[Max_n];
+
+	struct ASK
+	{
+		int l , r , ti;
+		ASK(int a , int b , int c)
+		{
+			l = a , r = b , ti = c;
+		}
+		ASK(){}
+	}b[Max_n];
+
+	inline int get_block(const int x)
+	{
+		return (x - 1 + base) / base;
+	}
+
+	inline bool cmp(ASK a , ASK b)
+	{
+		if(get_block(a.l) != get_block(b.l)) return get_block(a.l) < get_block(b.l);
+		if(get_block(a.r) != get_block(b.r)) return get_block(a.r) < get_block(b.r);
+		return a.ti < b.ti;
+	}
+
+	inline int lca(int x , int y)
+	{
+		while(dep[x] > dep[y])
+			x = fa[x][logm[dep[x] - dep[y]]];
+		while(dep[y] > dep[x])
+			y = fa[y][logm[dep[y] - dep[x]]];
+		if(x == y) return x;
+		for(int i = logm[dep[x]] ; i >= 0 ; -- i)
+		{
+			if(fa[x][i] == fa[y][i]) continue;
+			x = fa[x][i] , y = fa[y][i];
+		}
+		return fa[x][0];
+	}
+
+	int buk[Max_n << 1] , sum[Max_n] , tmp_ans;
+
+	inline void add(const int x)
+	{
+		if( ++ buk[x] == 1) ++ tmp_ans;
+	}
+
+	inline void del(const int x)
+	{
+		if(-- buk[x] == 0) -- tmp_ans;
+	}
+
+	inline void change(const int pos , const int ki)
+	{
+		sum[pos] += ki;
+		if(sum[pos] % 2) add(a[pos]);
+		else del(a[pos]);
+	}
+
+	struct aiyiusjdbc
+	{
+		int type ,  ui , vi;
+		aiyiusjdbc(int a , int b , int c)
+		{
+			type = a , ui = b , vi = c;
+		}
+		aiyiusjdbc(){}
+	}jkl[Max_n];
+
+	inline int find(const int x)
+	{
+		return lower_bound(lsh + 1 , lsh + len , x) - lsh;
+	}
+
+	inline void main()
+	{
+		n = read() , q = read() , base = pow(2 * n , 2.0 / 3.0);
+		for(int i = 1 ; i <= n ; ++ i) lsh[i] = a[i] = read();
+		for(int i = 1 ; i < n ; ++ i) add_edge(read() , read());
+		for(int i = 2 ; i <= n ; ++ i) logm[i] = logm[i / 2] + 1;
+		dfs_tree(1 , 0); len = n;
+		for(int i = 1 ; i <= q ; ++ i)
+		{
+			int ui = read() , vi = read() , ti = read();
+			if(ui == 2) lsh[ ++ len] = ti;
+			jkl[i] = aiyiusjdbc(ui , vi , ti);
+		}
+		sort(lsh + 1 , lsh + len + 1) , len = unique(lsh + 1 , lsh + len + 1) - lsh;
+		for(int i = 1 ; i <= n ; ++ i) a[i] = find(a[i]) , lst[i] = a[i];
+		for(int i = 1 ; i <= q ; ++ i)
+		{
+			int type = jkl[i].type , ui = jkl[i].ui , vi = jkl[i].vi;
+			if(type == 1)
+			{
+				int l = lca(ui , vi);
+				if(ui == l || vi == l) 
+					b[ ++ cnt] = ASK(min(dfnin[ui] , dfnin[vi]) , max(dfnin[ui] , dfnin[vi]) , i);
+				else b[ ++ cnt] = ASK(min(dfnout[ui] , dfnout[vi]) , max(dfnin[ui] , dfnin[vi]) , i);
+			}
+			else opt[i] = Node(lst[ui] , ui , find(vi)) , lst[ui] = find(vi);
+		}
+		sort(b + 1 , b + cnt + 1 , cmp);
+		int l = 1 , r = 0 , time = 0;
+		for(int i = 1 ; i <= cnt ; ++ i)
+		{
+			int nowl = b[i].l , nowr = b[i].r , nowt = b[i].ti;
+			while(l < nowl) change(rev[l] , -1) , ++ l;
+			while(r > nowr) change(rev[r] , -1) , -- r;
+			while(l > nowl) -- l , change(rev[l] , 1);
+			while(r < nowr) ++ r , change(rev[r] , 1);
+			while(time < nowt)
+				if(opt[ ++ time].lst)
+				{
+					int tmppos = opt[time].pos; a[tmppos] = opt[time].col;
+					if(sum[tmppos] % 2) del(opt[time].lst) , add(opt[time].col);
+				}
+			while(time > nowt)
+			{
+				if(opt[time].lst)
+				{
+					int tmppos = opt[time].pos; a[tmppos] = opt[time].lst;
+					if(sum[tmppos] % 2) del(opt[time].col) , add(opt[time].lst);
+				}
+				-- time;
+			}
+			int nowx = rev[nowl] , nowy = rev[nowr] , l = lca(nowx , nowy);
+			ans[b[i].ti] = tmp_ans + (buk[a[l]] == 0);
+		}
+		for(int i = 1 ; i <= q ; ++ i) if(!opt[i].lst) printf("%d\n" , ans[i]);
+	}
+}
+
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
