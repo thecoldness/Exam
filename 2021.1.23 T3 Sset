@@ -1,0 +1,111 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <algorithm>
+#include <bitset>
+#include <cmath>
+#include <vector>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0; bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+			flag = (c == '-') , c = getchar();
+		while(isdigit(c))
+			res = res * 10 + (c ^ 48) , c = getchar();
+		return !flag ? res : -res;
+	}
+
+	const int Max_m = 1e4 + 5;
+	const int Max_n = 65540;
+
+	bitset<Max_m> tag[260] , all[260] , ans[Max_n];
+
+	int base , n , m;
+
+	vector<int> v[Max_n];
+
+	inline int get_block(const int x)
+	{
+		return (x - 1 + base) / base;
+	}
+
+	inline void main()
+	{
+		n = read() , m = read() , base = sqrt(n);
+		while(m --)
+		{
+			int type = read() , l = read() , r = read() , val = read();
+			int bl = get_block(l) , br = get_block(r);
+			if(type == 1)
+			{
+				for(int i = bl ; i <= br ; ++ i) all[i].set(val);
+				if(bl == br)
+					for(int i = l ; i <= r ; ++ i) v[i].push_back(val);
+				else
+				{
+					for(int i = l ; i <= bl * base ; ++ i) v[i].push_back(val);
+					for(int i = (br - 1) * base + 1 ; i <= r ; ++ i) v[i].push_back(val);
+					for(int i = bl + 1 ; i < br ; ++ i) tag[i].set(val);
+				}
+			}
+			else
+			{
+				if(!val) {puts("-1"); continue;}
+				ans[m] |= tag[bl];
+				if(bl == br)
+				{
+					for(int i = l ; i <= r ; ++ i)
+					{
+						int sz = v[i].size();
+						for(int j = 0 ; j < sz ; ++ j) ans[m].set(v[i][j]);
+					}
+					if(ans[m].count() < val) {puts("-1"); continue;}
+					for(int i = 0 ; i <= 1e4 ; ++ i)
+						if(ans[m][i]) if(-- val == 0) {printf("%d\n" , i); break;}
+					continue;
+				}
+				ans[m] |= tag[br];
+				if(l == (bl - 1) * base + 1) ans[m] |= all[bl];
+				else
+					for(int i = l ; i <= bl * base ; ++ i)
+					{
+						int sz = v[i].size();
+						for(int j = 0 ; j < sz ; ++ j) ans[m].set(v[i][j]);
+					}
+				if(r == min(br * base , n)) ans[m] |= all[br];
+				else 
+					for(int i = (br - 1) * base + 1 ; i <= r ; ++ i)
+					{
+						int sz = v[i].size();
+						for(int j = 0 ; j < sz ; ++ j) ans[m].set(v[i][j]);
+					}
+				for(int i = bl + 1 ; i < br ; ++ i) ans[m] |= all[i];
+				if(ans[m].count() < val) {puts("-1"); continue;}
+				int siz = ans[m].count();
+				if(val > 5e3)
+				{
+					for(int i = 1e4 ; i >= 0 ; -- i)
+						if(ans[m][i])
+						{
+							if(siz == val) {printf("%d\n" , i); break;}
+							-- siz;
+						}
+				}
+				else for(int i = 0 ; i <= 1e4 ; ++ i)
+					if(ans[m][i]) if(-- val == 0) {printf("%d\n" , i); break;}
+			}
+		}
+	}
+}
+
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
