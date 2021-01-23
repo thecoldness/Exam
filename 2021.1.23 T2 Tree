@@ -1,0 +1,131 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <vector>
+#include <cassert>
+#include <algorithm>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0; bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+			flag = (c == '-') , c = getchar();
+		while(isdigit(c))
+			res = res * 10 + (c ^ 48) , c = getchar();
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 2e5 + 5;
+
+	int n , dep[Max_n] , logm[Max_n] , fa[Max_n][20] , ans[Max_n];
+	int beg[Max_n] , ed[Max_n] , head[Max_n] , tot , cnt = 1;
+
+	struct node
+	{
+		int nex , to;
+		node(int a , int b)
+		{
+			nex = a , to = b;
+		}
+		node(){}
+	}edge[Max_n];
+
+	void dfs_tree(const int now , const int from)
+	{
+		dep[now] = dep[from] + 1 , fa[now][0] = from;
+		for(int i = 1 ; i <= logm[dep[now]] ; ++ i)
+			fa[now][i] = fa[fa[now][i - 1]][i - 1];
+		for(int i = head[now] ; i ; i = edge[i].nex)
+		{
+			int nex = edge[i].to;
+			dfs_tree(nex , now);
+		}
+	}
+
+	inline int lca(int x , int y)
+	{
+		while(dep[x] > dep[y])
+			x = fa[x][logm[dep[x] - dep[y]]];
+		while(dep[y] > dep[x])
+			y = fa[y][logm[dep[y] - dep[x]]];
+		if(x == y) return x;
+		for(int i = logm[dep[x]] ; i >= 0 ; -- i)
+		{
+			if(fa[x][i] == fa[y][i]) continue;
+			x = fa[x][i] , y = fa[y][i];
+		}
+		return fa[x][0];
+	}
+
+	inline int dist(const int x , const int y)
+	{
+		int l = lca(x , y);
+		return dep[x] + dep[y] - 2 * dep[l];
+	}
+
+	vector<int> v[Max_n << 2];
+
+	void change(const int ll , const int rr , const int l , const int r , const int tr , const int dot)
+	{
+		if(ll > r || rr < l) return;
+		if(l <= ll && rr <= r) return v[tr].push_back(dot) , void();
+		int mid = (ll + rr) >> 1;
+		change(ll , mid , l , r , tr * 2 , dot) , change(mid + 1 , rr , l , r , tr * 2 + 1 , dot);
+	}
+
+	void solve(const int l , const int r , int p1 , int p2 , int l1 , int l2 , const int now)
+	{
+		int sz = v[now].size();
+		for(int i = 0 ; i < sz ; ++ i)
+		{
+			int dot = v[now][i] , dis1 = dist(dot , p1) , dis2 = dist(dot , p2);
+			if(dis1 < dis2) swap(dis1 , dis2) , swap(p1 , p2);
+			int l3 = (dis1 + dis2 - l1) >> 1;
+			if(l3 * 2 > dis2)
+			{
+				assert(dis1 == l1 + l3 * 2 - dis2);
+				p2 = dot , l1 = dis1;
+			}
+			else l2 = max(l2 , l3);
+		}
+		if(l == r) return ans[l] = l1 + max(0 , l2 - 1) , void();
+		int mid = (l + r) >> 1;
+		solve(l , mid , p1 , p2 , l1 , l2 , now * 2) , solve(mid + 1 , r , p1 , p2 , l1 , l2 , now * 2 + 1);
+	}
+
+	inline void add_edge(const int x , const int y)
+	{
+		edge[ ++ tot] = node(head[x] , y) , head[x] = tot;
+	}
+
+	inline void main()
+	{
+		n = read();
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			int type = read() , pos = read();
+			// if(type == 2) ed[pos] = i; bug
+			if(type == 2) ed[pos] = i - 1;
+			else add_edge(pos , ++ cnt) , beg[cnt] = i;
+		}
+		// for(int i = 1 ; i <= n + 1 ; ++ i) if(!ed[i]) ed[i] = n + 1;// bug// bug
+		for(int i = 1 ; i <= cnt ; ++ i) if(!ed[i]) ed[i] = n + 1;
+		for(int i = 2 ; i <= cnt ; ++ i) logm[i] = logm[i / 2] + 1;
+		dfs_tree(1 , 0);
+		// for(int i = 2 ; i <= n + 1 ; ++ i)	change(1 , n + 1 , beg[i] , ed[i] , 1 , i); bug
+		for(int i = 2 ; i <= cnt ; ++ i)	change(1 , n + 1 , beg[i] , ed[i] , 1 , i);
+		solve(1 , n + 1 , 1 , 1 , 0 , 0 , 1);
+		for(int i = 1 ; i <= n ; ++ i) printf("%d\n" , ans[i]);
+	}
+}
+
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
