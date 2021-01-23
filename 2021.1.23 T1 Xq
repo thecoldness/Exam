@@ -1,0 +1,106 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <cctype>
+#include <bitset>
+#include <cmath>
+#include <cassert>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0; bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+			flag = (c == '-') , c = getchar();
+		while(isdigit(c))
+			res = res * 10 + (c ^ 48) , c = getchar();
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 1e5 + 5;
+
+	bitset<Max_n / 4> tmp , bt[Max_n];
+
+	int lsh[Max_n] , n , m , a[Max_n] , buk[Max_n] , ans[Max_n];
+	int sum[Max_n] , tot , base , len , tmpl , tmpr , delta;
+
+	struct node
+	{
+		int l , r , bel;
+		node(int a , int b , int c)
+		{
+			l = a , r = b , bel = c;
+		}
+		node(){}
+	}q[Max_n * 3];
+
+	inline int get_block(const int x)
+	{
+		return (x - 1 + base) / base;
+	}
+
+	inline int find(const int x)
+	{
+		return lower_bound(lsh + 1 , lsh + len , x) - lsh;
+	}
+
+	inline bool cmp(node a , node b)
+	{
+		if(get_block(a.l) != get_block(b.l)) return get_block(a.l) < get_block(b.l);
+		return a.r < b.r;
+	}
+
+	inline void add(const int pos)
+	{
+		if(pos > tmpr || pos < tmpl) return;
+		tmp.set(pos - tmpl);
+	}
+
+	inline void del(const int pos)
+	{
+		if(pos > tmpr || pos < tmpl) return;
+		tmp.reset(pos - tmpl);
+	}
+
+	inline void main()
+	{
+		n = read() , m = read() , base = sqrt(n);
+		for(int i = 1 ; i <= n ; ++ i) lsh[i] = a[i] = read();
+		sort(lsh + 1 , lsh + n + 1) , len = unique(lsh + 1 , lsh + n + 1) - lsh;
+		for(int i = 1 ; i <= n ; ++ i) a[i] = find(a[i]) , ++ buk[a[i]];
+		for(int i = 1 ; i <= len ; ++ i) buk[i] += buk[i - 1];
+		assert(buk[len] == n);
+		for(int i = 1 ; i <= m ; ++ i)
+		{
+			int l1 = read() , r1 = read() , l2 = read() , r2 = read() , l3 = read() , r3 = read();
+			ans[i] = r1 + r2 + r3 - l1 - l2 - l3 + 3;
+			q[ ++ tot] = node(l1 , r1 , i) , q[ ++ tot] = node(l2 , r2 , i) , q[ ++ tot] = node(l3 , r3 , i);
+		}
+		sort(q + 1 , q + tot + 1 , cmp); tmpl = 1 , tmpr = n / 4 , delta = n / 4;
+		for(; tmpl <= n ; tmpl = tmpr + 1 , tmpr = min(tmpr + delta , n))
+		{
+			tmp.reset(); for(int i = 1 ; i <= m ; ++ i) bt[i].set();
+			int l = 1 , r = 0; memset(sum , 0 , sizeof(sum));
+			for(int i = 1 ; i <= tot ; ++ i)
+			{
+				int nowl = q[i].l , nowr = q[i].r;
+				while(l > nowl) -- l , ++ sum[a[l]] , add(buk[a[l] - 1] + sum[a[l]]);
+				while(r < nowr) ++ r , ++ sum[a[r]] , add(buk[a[r] - 1] + sum[a[r]]);
+				while(l < nowl) del(buk[a[l] - 1] + sum[a[l]]) , -- sum[a[l]] , ++ l;
+				while(r > nowr) del(buk[a[r] - 1] + sum[a[r]]) , -- sum[a[r]] , -- r;
+				bt[q[i].bel] &= tmp;
+			}
+			for(int i = 1 ; i <= m ; ++ i) ans[i] -= 3 * bt[i].count();
+		}
+		for(int i = 1 ; i <= m ; ++ i) printf("%d\n" , ans[i]);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
