@@ -1,0 +1,99 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <algorithm>
+#include <cmath>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+
+	inline int read()
+	{
+		int res = 0; bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+			flag = (c == '-') , c = getchar();
+		while(isdigit(c))
+			res = res * 10 + (c ^ 48) , c = getchar();
+		return !flag ? res : -res;
+	}
+
+	const int Max_n = 1e5 + 5;
+	const int Max_q = 1e6 + 5;
+
+	struct node
+	{
+		int l , r , bel , ki;
+		node(int a , int b , int c , int d)
+		{
+			l = a , r = b , bel = c , ki = d;
+		}
+		node(){}
+	}q[Max_q << 2];
+
+	int n , m , qu , a[Max_n] , b[Max_n] , buka[Max_n] , bukb[Max_n];
+	int base , tot , mu[Max_q];
+
+	ll tmp_ans , ans[Max_q];
+
+	inline int get_block(const int x)
+	{
+		return (x - 1 + base) / base;
+	}
+
+	inline bool cmp(node a , node b)
+	{
+		if(get_block(a.l) != get_block(b.l)) return a.l < b.l;
+		return a.r < b.r;
+	}
+
+	ll gcd(ll a , ll b)
+	{
+		return b == 0 ? a : gcd(b , a % b);
+	}
+
+	inline void main()
+	{
+		n = read() , m = read();
+		for(int i = 1 ; i <= n ; ++ i) a[i] = read();
+		for(int i = 1 ; i <= m ; ++ i) b[i] = read();
+		qu = read(); base = max(1 , (int)(n / sqrt(qu)));
+		for(int i = 1 ; i <= qu ; ++ i)
+		{
+			int l1 = read() , r1 = read() , l2 = read() , r2 = read(); mu[i] = r2 - l2 + 1;
+			q[ ++ tot] = node(r1 , r2 , i , 1) , q[ ++ tot] = node(r1 , l2 - 1 , i , -1);
+			q[ ++ tot] = node(l1 - 1 , l2 - 1 , i , 1) , q[ ++ tot] = node(l1 - 1 , r2 , i , -1);
+		}
+		sort(q + 1 , q + tot + 1 , cmp); int l = 0 , r = 0;
+		for(int i = 1 ; i <= tot ; ++ i)
+		{
+			int nowl = q[i].l , nowr = q[i].r;
+			while(l < nowl) ++ l , tmp_ans += bukb[a[l]] , ++ buka[a[l]];
+			while(r < nowr) ++ r , tmp_ans += buka[b[r]] , ++ bukb[b[r]];
+			while(l > nowl) tmp_ans -= bukb[a[l]] , -- buka[a[l]] , -- l;
+			while(r > nowr) tmp_ans -= buka[b[r]] , -- bukb[b[r]] , -- r;
+			ans[q[i].bel] += 1ll * q[i].ki * tmp_ans;
+		}
+		for(int i = 1 ; i <= qu ; ++ i)
+		{
+			ll g = gcd(ans[i] , mu[i]);
+			printf("%lld %lld\n" , ans[i] / g , mu[i] / g);
+		}
+	}
+}
+
+signed main()
+{
+	// freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
+/*
+4 4
+2 2 1 1 
+1 1 2 2 
+1
+1 2 3 4
+*/
