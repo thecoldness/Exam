@@ -1,0 +1,262 @@
+#include <cstdio>
+#include <cctype>
+#include <algorithm>
+#include <cstring>
+#include <queue>
+#include <vector>
+#include <set>
+#include <cassert>
+#define int long long
+using namespace std;
+
+namespace thecold
+{
+    typedef long long ll;
+
+    inline ll read()
+    {
+        ll res = 0; bool flag = false;
+        char c = getchar();
+        while(!isdigit(c))
+            flag = (c == '-') , c = getchar();
+        while(isdigit(c))
+            res = res * 10 + (c ^ 48) , c = getchar();
+        return !flag ? res : -res;
+    }
+
+    const int Max_n = 105; const int INF = 1e7;
+
+    int n , m  , head[Max_n * Max_n] , tot = 1 , mxflow;
+    int prime[15] = {0 , 2 , 3 , 5 , 7 , 11 , 13 , 17 , 19 , 23 , 29};
+    int dx[4] = {0 , 0 , 1 , -1} , dy[4] = {1 , -1 , 0 , 0};
+
+    ll a[Max_n][Max_n];
+
+    inline int get_id(const int x , const int y)
+    {
+        return (x - 1) * m + y;
+    }
+
+    struct node
+    {
+        int nex , to , val;
+        node(const int a , const int b , const int c)
+        {
+            nex = a , to = b , val = c;
+        }
+        node(){}
+    }edge[Max_n * Max_n * Max_n];
+
+    inline bool check(const int x , const int y)
+    {
+        if(x < 1 || x > n || y < 1 || y > m || a[x][y] == -1) return false;
+        return true;
+    }
+
+    inline ll quickpow(__int128 x , __int128 y , __int128 MOD)
+    {
+        __int128 ret = 1;
+        while(y)
+        {
+            if(y & 1)   ret *= x , ret %= MOD;
+            x *= x , x %= MOD;
+            y >>= 1;
+        }
+        return ret;
+    }
+
+    inline bool MR(const __int128 p)
+    {
+        if(p <= 3) return true;
+        if(p & 1 == 0) return false;
+        ll t = p - 1 , k = 0;
+        while(!(t & 1)) ++ k , t >>= 1;
+        for(int i = 1 ; i <= 10 ; ++ i)
+        {
+            if(p == prime[i])   return true;
+            __int128 a = quickpow(prime[i] , t , p);
+            for(int j = 1 ; j <= k ; ++ j)
+            {
+                __int128 nex = a * a % p;
+                if(nex == 1 && a != 1 && a != p - 1)    return false;
+                a = nex;    
+            }
+            if(a != 1)  return false;
+        }
+        return true;
+    }
+
+    inline void add_edge(const int x , const int y)
+    {
+        //if(y == 10) printf("%lld\n" , x);
+        edge[ ++ tot] = node(head[x] , y , 1) , head[x] = tot;
+        edge[ ++ tot] = node(head[y] , x , 0) , head[y] = tot;
+    }
+
+    int dis[Max_n * Max_n] , beg[Max_n * Max_n] , s , t;
+
+    queue<int> q;
+
+    inline bool bfs()
+    {
+        memset(dis , 0x3f , sizeof(dis)); memset(beg , 0 , sizeof(beg));
+        dis[s] = 0; while(q.size()) q.pop(); q.push(s);
+        beg[s] = head[s];
+        while(q.size())
+        {
+            int now = q.front(); q.pop();
+            for(int i = head[now] ; i ; i = edge[i].nex)
+            {
+                int nex = edge[i].to , va = edge[i].val;
+                if(va == 0 || dis[nex] != 0x3f3f3f3f3f3f3f3f) continue;
+                dis[nex] = dis[now] + 1 , beg[nex] = head[nex];
+                if(nex == t) return true; 
+                q.push(nex);
+            }
+        }
+        return false;
+    }
+
+    int dinic(const int now , int flow)
+    {
+        if(now == t) return flow;
+        int ret = 0;
+        for(int i = beg[now] ; i ; i = edge[i].nex)
+        {
+            beg[now] = i;
+            int nex = edge[i].to , va = edge[i].val;
+            if(va == 0 || dis[nex] != dis[now] + 1) continue;
+            int tmp = dinic(nex , min(flow , va));
+            if(tmp == 0) dis[nex] = 0x3f3f3f3f3f3f3f3f;
+            edge[i].val -= tmp , edge[i ^ 1].val += tmp , ret += tmp , flow -= tmp;
+            if(flow == 0) break;
+        }
+        // return flow; bug
+        return ret;
+    }
+
+    set<int> st;
+
+    typedef set<int>::iterator iter;
+
+    bool vis[Max_n * Max_n]; int boom;
+
+    void dfs(const int now , const int val , const int dep)
+    {
+        // if(dep > 3) return; bug
+        if(vis[now]) return; vis[now] = true;
+        int xi = now / m + 1 , yi = now % m;
+        if(yi == 0) -- xi , yi = m;
+        assert(st.find(now) == st.end());
+        if(now != boom && (dep & 1) && a[xi][yi] != -1) st.insert(now);
+        for(int i = head[now] ; i ; i = edge[i].nex)
+        {
+            if(edge[i].val ^ val) continue;
+            dfs(edge[i].to , val , dep + 1);
+        }
+    }
+
+    void dfs_ans_s(int cur) 
+    {
+        vis[cur] = true;
+        for (int i = head[cur]; i; i = edge[i].nex) 
+            if (edge[i].val == 1) 
+            {
+                int to = edge[i].to; if (!vis[to]) dfs_ans_s(to);
+            }
+    }
+
+    void dfs_ans_t(int cur) 
+    {
+        vis[cur] = true;
+        for (int i = head[cur]; i; i = edge[i].nex) 
+            if (edge[i ^ 1].val == 1) 
+            {
+             int to = edge[i].to; if (!vis[to]) dfs_ans_t(to);
+            }
+    }
+
+    bool canwin[Max_n][Max_n];
+
+    #include <utility>
+
+    pair<int , int> aans[Max_n * Max_n]; int atot , etot;
+
+    struct Node
+    {
+        int ui , vi , ti , ei;
+        Node(int a , int b , int c , int d)
+        {
+            ui = a , vi = b , ti = c , ei = d;
+        }
+        Node(){}
+        inline void write()
+        {
+            printf("%lld %lld %lld %lld\n" , ui , vi , ti , ei);
+        }
+    }edd[Max_n * Max_n * Max_n];
+
+    inline bool cmp(Node a , Node b)
+    {
+        if(a.ui != b.ui) return a.ui < b.ui;
+        if(a.vi != b.vi) return a.vi < b.vi;
+        if(a.ti != b.ti) return a.ti < b.ti;
+        return a.ei < b.ei;
+    }
+
+    inline void main()
+    {
+        n = read() , m = read();
+        for(int i = 1 ; i <= n ; ++ i)
+            for(int j = 1 ; j <= m ; ++ j)
+                a[i][j] = read();
+        for(int i = 1 ; i <= n ; ++ i)
+            for(int j = 1 ; j <= m ; ++ j)
+            if(!((i + j) & 1))
+                for(int k = 0 ; k < 4 ; ++ k)
+                    if(check(i + dx[k] , j + dy[k]) && check(i , j))
+                        if(!MR(a[i][j] + a[i + dx[k]][j + dy[k]]))
+                            add_edge(get_id(i , j) , get_id(i + dx[k] , j + dy[k]))  , edd[ ++ etot] = Node(i , j , i + dx[k] , j+ dy[k]);
+                            // else add_edge(get_id(i + dx[k] , j + dy[k]) , get_id(i , j)); bug
+        s = 0 , t = n * m + 1;
+        for(int i = 1 ; i <= n ; ++ i)
+            for(int j = (i & 1 ? 1 : 2) ; j <= m ; j += 2)
+                add_edge(s , get_id(i , j));// , printf("%lld %lld\n" , s , get_id(i , j));
+        for(int i = 1 ; i <= n ; ++ i)
+            for(int j = (i & 1 ? 2 : 1) ; j <= m ; j += 2)
+                add_edge(get_id(i , j) , t);// , printf("%lld %lld\n" , get_id(i , j) , t);
+        while(bfs()) mxflow += dinic(s , INF);
+        boom = t , dfs(s , 1 , 0) , memset(vis , false , sizeof(vis)) , boom = s , dfs(t , 0 , 0);
+        iter it = st.begin(); int ans = st.size();
+        printf("%lld\n" , ans);
+        while(it != st.end())
+        {
+            int now = *it , xi = now / m + 1 , yi = now % m;
+            if(yi == 0) yi = m , -- xi;
+            printf("%lld %lld\n" , xi , yi); ++ it;
+        }
+        // puts("");
+        // printf("%lld\n" , mxflow);
+        // for(int i = 1 ; i <= n ; ++ i)
+        //  for(int j = (i & 1 ? 1 : 2) ; j <= m ; j += 2)
+        //  {
+        //      int now = get_id(i , j);
+        //      for(int k = head[now] ; k ; k = edge[k].nex)
+        //          if(edge[k].val) printf("%lld %lld\n" , now , edge[k].to);
+        //  }
+        // for(int i = head[0] ; i ; i = edge[i].nex)
+        //  if(edge[i].val) printf("%lld %lld\n" , 0 , edge[i].to);
+        // for(int i = head[t] ; i ; i = edge[i].nex)
+        //  if(edge[i].val) printf("%lld %lld\n" , edge[i].to , t);
+        // printf("%lld\n" , etot);
+        // sort(edd + 1 , edd + etot + 1 , cmp);
+        // for(int i = 1 ; i <= etot ; ++ i) edd[i].write();
+    }
+}
+
+signed main()
+{
+    // freopen("data.in" , "r" , stdin);    
+    thecold::main();
+    return 0;
+}
