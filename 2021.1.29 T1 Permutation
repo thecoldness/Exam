@@ -1,0 +1,105 @@
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <algorithm>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+
+	const int jzp = 998244353; const int G = 3;
+	const int Max_n = 1e5 + 5; const int Gi = (jzp + 1) / 3;
+
+	int n , k , f[Max_n << 2] , g[Max_n << 2] , ans;
+
+	ll jc[Max_n] , invjc[Max_n];
+
+	int len , lim , rev[Max_n << 2];
+
+	inline void prepare(const int lenth)
+	{
+		len = 1 , lim = 0;
+		while(len <= lenth) len <<= 1 , ++ lim;
+		for(int i = 1 ; i < len ; ++ i) rev[i] = (rev[i >> 1] >> 1) | ((i & 1) << (lim - 1));
+	}
+
+	inline int quickpow(ll x , ll y)
+	{
+		ll ret = 1;
+		while(y)
+		{
+			if(y & 1) ret = ret * x % jzp;
+			x = x * x % jzp , y >>= 1;
+		}
+		return ret;
+	}
+
+	inline int C(const int n , const int m)
+	{
+		if(m > n) return 0;
+		return jc[n] * invjc[m] % jzp *  invjc[n - m] % jzp;
+	}
+
+	inline int add(const int x , const int y)
+	{
+		int ret = x + y;
+		if(ret >= jzp) ret -= jzp;
+		return ret;
+	}
+
+	inline void NTT(int *w , const int opt)
+	{
+		for(int i = 1 ; i < len ; ++ i)
+			// if(rev[i] > i) swap(rev[i] , i); bug
+			if(rev[i] > i) swap(w[rev[i]] , w[i]);
+		for(int dep = 1 ; dep <= lim ; ++ dep)
+		{
+			int base = quickpow(opt == 1 ? G : Gi , (jzp - 1) / (1 << dep));
+			for(int i = 0 ; i < len ; i += 1 << dep)
+			{
+				int q = 1;
+				for(int j = 0 ; j < 1 << (dep - 1) ; ++ j)
+				{
+					int ui = w[i + j] , vi = 1ll * q * w[i + j + (1 << (dep - 1))] % jzp;
+					w[i + j] = add(ui , vi) , w[i + j + (1 << (dep - 1))] = add(ui , jzp - vi);
+					q = 1ll * q * base % jzp;
+				}
+			}
+		}
+		if(opt == -1)
+		{
+			int inv = quickpow(len , jzp - 2);
+			for(int i = 0 ; i < len ; ++ i) w[i] = 1ll * w[i] * inv % jzp;
+		}
+	}
+
+	inline void main()
+	{
+		scanf("%d %d" , &n , &k);
+		int len1 = n / k , len2 = len1 - 1 , c1 = n % k , c2 = k - c1;
+		invjc[0] = jc[0] = 1;
+		for(int i = 1 ; i <= n ; ++ i) jc[i] = jc[i - 1] * i % jzp;
+		invjc[n] = quickpow(jc[n] , jzp - 2);
+		for(int i = n - 1 ; i ; -- i) invjc[i] = invjc[i + 1] * (i + 1) % jzp;
+		f[0] = g[0] = 1;
+		for(int i = 1 ; 2 * i - 1 <= len1 ; ++ i) f[i] = C(len1 - i + 1 , i);
+		for(int i = 1 ; 2 * i - 1 <= len2 ; ++ i) g[i] = C(len2 - i + 1 , i);
+		// for(int i = 0 ; i <= len1 ; ++ i) printf("%d %d\n" , f[i] , g[i]);
+		// puts("");
+		prepare(n); NTT(f , 1) , NTT(g , 1);
+		for(int i = 0 ; i < len ; ++ i) f[i] = 1ll * quickpow(f[i] , 2 * c1) * quickpow(g[i] , 2 * c2) % jzp;
+		NTT(f , -1); //for(int i = 0 ; i <= n ; ++ i) printf("%d " , f[i]);
+		// puts("");
+		for(int i = 0 ; i <= n ; ++ i)
+			if(i & 1) ans = add(ans , jzp - 1ll * f[i] * jc[n - i] % jzp);
+			else ans = add(ans , 1ll * f[i] * jc[n - i] % jzp);
+		printf("%d\n" , ans);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
