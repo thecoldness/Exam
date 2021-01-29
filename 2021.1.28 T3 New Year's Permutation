@@ -1,0 +1,93 @@
+#include <cstdio>
+#include <cctype>
+#include <algorithm>
+#include <set>
+using namespace std;
+
+namespace thecold
+{
+    inline int read()
+    {
+        int res = 0; bool flag = false;
+        char c = getchar();
+        while(!isdigit(c))
+            flag = (c == '-') , c = getchar();
+        while(isdigit(c))
+            res = res * 10 + (c ^ 48) , c = getchar();
+        return !flag ? res : -res;
+    }
+
+    const int Max_n = 2025;
+
+    int a[Max_n] , n , ans , hav[Max_n] , len , now;
+    int pin[Max_n][Max_n] , lst[Max_n] , base , cpa;
+
+    struct node
+    {
+        int val , pos , bel;
+        node(int a , int b , int c)
+        {
+            val = a , pos = b , bel = c;
+        }
+        node(){}
+        bool operator < (const node &a)const
+        {
+            return val < a.val;
+        }
+    }b[Max_n];
+
+    bool vis[Max_n] , vis_blo[Max_n];// bug 
+
+    inline void main()
+    {
+        n = read();
+        for(int i = 1 ; i <= n ; ++ i) a[i] = read();
+        for(int i = 200 ; i ; -- i) if(i * (i + 1) <= n) {printf("%d\n" , cpa = ans = i); break;}
+        n = ans * (ans + 1);
+        for(; ans ; -- ans)
+        {
+            base = ans + 1; int len = 0 , now = 1 , tot = 0;
+            for(int i = 1 ; i <= n ; ++ i)
+            {
+                if(vis[i]) continue;
+                b[ ++ tot] = node(a[i] , i , now) , ++ len;
+                if(len == ans + 1) len = 0 , ++ now;
+                if(now > ans) break;
+            }
+            for(int i = 1 ; i <= ans ; ++ i) vis_blo[i] = false;
+            sort(b + 1 , b + tot + 1); int wt = 1;
+            for(int cnt = 1 ; cnt <= ans ; ++ cnt)
+            {
+                for(int i = 1 ; i <= ans ; ++ i) lst[i] = 0;
+                for(; wt <= tot ; ++ wt)
+                    if(vis_blo[b[wt].bel]) continue;// bug
+                    else
+                    {
+                        if(!lst[b[wt].bel]) lst[b[wt].bel] = b[wt].pos;
+                        else
+                        {
+                            pin[ans][cnt * 2 - 1] = lst[b[wt].bel] , pin[ans][cnt * 2] = b[wt].pos;
+                            vis[lst[b[wt].bel]] = vis[b[wt].pos] = true , vis_blo[b[wt].bel] = true; ++ wt; break;
+                        }
+                    }
+            }
+        }
+        for(int i = 1 ; i <= cpa ; ++ i)
+        {
+            sort(pin[i] + 1 , pin[i] + i * 2 + 1);
+            for(int j = 1 ; j <= i * 2 ; ++ j) printf("%d " , a[pin[i][j]]);
+            puts("");
+        }
+    }
+}
+
+int main()
+{
+    // freopen("data.in" , "r" , stdin);
+    thecold::main();
+    return 0;
+}
+/*
+12
+1 5 9 10 12 8 11 3 4 6 2 7
+*/
