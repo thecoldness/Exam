@@ -1,0 +1,98 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <bitset>
+using namespace std;
+
+namespace thecold
+{
+	typedef long long ll;
+
+	const int Max_n = 105;
+
+	int n , k , jzp , ans;
+
+	struct Matrix
+	{
+		int h[Max_n][Max_n];
+		int* operator[] (const int a)
+		{
+			return h[a];
+		}
+
+		inline void clear()
+		{
+			memset(h , 0 , sizeof(h));
+		}
+
+		inline void init()
+		{
+			clear();
+			for(int i = 1 ; i <= n ; ++ i) h[i][i] = 1;
+		}
+	}sum , mi , ept , base , tmp;
+
+	inline void add(int &x , const int y)
+	{
+		x += y; if(x >= jzp) x -= jzp;
+	}
+
+	Matrix operator * (Matrix a , Matrix b)
+	{
+		Matrix ret; ret.clear();
+		for(int i = 1 ; i <= n ; ++ i)
+			for(int k = 1 ; k <= n ; ++ k)
+				for(int j = 1 ; j <= n ; ++ j)
+					add(ret[i][j] , 1ll * a[i][k] * b[k][j] % jzp);
+		return ret;
+	}
+
+	char c[Max_n];
+
+	inline void quickpow(const int x)
+	{
+		if(x == 0) return sum.init() , mi.init();
+		if(x == 1) return sum = mi = base , void();
+		quickpow(x / 2) , tmp = mi; for(int i = 1 ; i <= n ; ++ i) add(tmp[i][i] , 1);
+		sum = sum * tmp , mi = mi * mi;
+		if(x & 1)
+		{
+			mi = mi * base;
+			for(int i = 1 ; i <= n ; ++ i)
+				for(int j = 1 ; j <= n ; ++ j) add(sum[i][j] , mi[i][j]);
+		}
+	}
+
+	inline void main()
+	{
+		scanf("%d" , &n);
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			scanf("%s" , c + 1);
+			for(int j = 1 ; j <= n ; ++ j) if(c[j] == 'Y') base[i][j] = 1;
+		}
+		scanf("%d %d" , &k , &jzp);
+		quickpow(k - 1); for(int i = 1 ; i <= n ; ++ i) add(ans , sum[i][i]);
+		printf("%d\n" , ans);
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
+/*
+10
+NNNYNYNNNY
+NNNNNYNNNN
+YNNYNNNYNN
+NYNNYYNNNN
+NNYYNNNNNN
+YNYYNNNYYN
+NNNYNYNNYY
+NYYNNNYNYN
+YNNYYYYYNN
+NNNNNYYYNN
+100 100
+*/
