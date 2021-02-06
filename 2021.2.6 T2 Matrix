@@ -1,0 +1,80 @@
+	#include <cstdio>
+	#include <cctype>
+	#include <algorithm>
+	#include <cstring>
+	using namespace std;
+
+	namespace thecold
+	{
+		typedef long long ll;
+
+		const int Max_n = 23;
+		const int Max_m = 2e5 + 5;
+
+		int n , m;
+		int a[Max_n][Max_m] , len , lim;
+
+		char c[Max_m];
+
+		ll f[1 << Max_n] , g[1 << Max_n];
+
+		inline int quickpow(ll x , ll y)
+		{
+			ll ret = 1;
+			while(y)
+			{
+				if(y & 1) ret = ret * x;
+				x = x * x , y >>= 1;
+			}
+			return ret;
+		}
+
+		inline void FWT(ll *w , const int opt)
+		{
+			for(int dep = 1 ; dep <= lim ; ++ dep)
+				for(int i = 0 ; i < len ; i += 1 << dep)
+					for(int j = 0 ; j < 1 << (dep - 1) ; ++ j)
+					{
+						ll ui = w[i + j] , vi = w[i + j + (1 << (dep - 1))];
+						w[i + j] = ui + vi , w[i + j + (1 << (dep - 1))] = ui - vi;
+					}
+			if(opt == -1)	for(int i = 0 ; i < len ; ++ i) w[i] /= len;
+		}
+
+		inline void main()
+		{
+			scanf("%d %d" , &n , &m); len = quickpow(2 , lim = n);
+			for(int i = 0 ; i < n ; ++ i)
+			{
+				scanf("%s" , c + 1);
+				for(int j = 1 ; j <= m ; ++ j) a[i][j] = c[j] - '0';
+			}
+			for(int i = 1 ; i <= m ; ++ i)
+			{
+				int ret = 0;
+				for(int j = 0 ; j < n ; ++ j) if(a[j][i]) ret |= 1 << j;
+				++ f[ret];
+			}
+			for(int i = 1 ; i < 1 << n ; ++ i) g[i] = g[i >> 1] + (i & 1);
+			for(int i = 1 ; i < 1 << n ; ++ i) g[i] = min(g[i] , n - g[i]);
+			FWT(f , 1) , FWT(g , 1); 
+			for(int i = 0 ; i < len ; ++ i) f[i] = f[i] * g[i]; 
+			FWT(f , -1); ll ans = 1e18;
+			for(int i = 0 ; i < 1 << n ; ++ i) ans = min(ans , f[i]);
+			printf("%lld\n" , ans);
+		}
+	}
+
+	int main()
+	{
+		// freopen("data.in" , "r" , stdin);
+		thecold::main();
+		return 0;
+	}
+	/*
+	4 4
+	0110
+	0011
+	1010
+	0100
+	*/
