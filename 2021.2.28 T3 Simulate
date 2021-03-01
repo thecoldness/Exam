@@ -1,0 +1,49 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+using namespace std;
+
+namespace thecold
+{
+	const int Max_n = 2e7 + 5;
+
+	char c[Max_n];
+
+	int n , st[Max_n] , tp , a[Max_n];
+
+	bool vis[Max_n];
+
+	inline void main()
+	{
+		scanf("%s" , c + 1); n = strlen(c + 1);
+		for(int i = 1 ; i <= n ; ++ i) a[i] = c[i] - '0';
+		for(int i = 1 ; i <= n ; ++ i)
+		{
+			if(a[i] == 1) continue;
+			while(a[i] > 1)
+			{
+				if(tp && st[tp] == i - 1)
+					a[i] -= 2 , ++ a[i + 1] , -- tp;
+				else
+				{
+					// int stp = min(a[i] - 1 , i - st[tp]); bug
+					int stp = min(a[i] - 1 , i - st[tp] - 1);
+					a[i + 1] += stp , a[i] -= stp;
+					if(!tp) st[ ++ tp] = stp;
+					else st[tp] += stp;
+				}
+			}
+			if(a[i] == 0) st[ ++ tp] = i;
+		}
+		for(int i = 1 ; i <= tp ; ++ i) vis[st[i]] = true;
+		for(int i = 1 ; i <= n ; ++ i)
+			if(vis[i]) printf("0");
+			else printf("1");
+	}
+}
+
+int main()
+{
+	thecold::main();
+	return 0;
+}
