@@ -1,0 +1,196 @@
+#include <cstdio>
+#include <cctype>
+#include <algorithm>
+#include <cstring>
+#include <vector>
+#include <queue>
+#include <utility>
+using namespace std;
+
+namespace thecold
+{
+	inline int read()
+	{
+		int res = 0; bool flag = false;
+		char c = getchar();
+		while(!isdigit(c))
+			flag = (c == '-') , c = getchar();
+		while(isdigit(c))
+			res = res * 10 + (c ^ 48) , c = getchar();
+		return !flag ? res : -res;
+	}
+
+	const int Max_s = 1e5 + 5;
+	const int Max_n = 55;
+
+	int son[Max_n][28] , tot = 1 , fail[Max_n] , siz[Max_n];
+	int n , q , beg[Max_s] , alr = 1 , cnt , cir[Max_s];
+
+	char c[Max_s] , s[Max_s];
+
+	inline void ins()
+	{
+		scanf("%s" , c + 1);
+		int now = 1 , lenth = strlen(c + 1);
+		for(int i = 1 ; i <= lenth ; ++ i)
+		{
+			int ch = c[i] - 'a';
+			if(!son[now][ch])
+				son[now][ch] = ++ tot;
+			now = son[now][ch];
+		}
+		++ siz[now];
+		for(int i = 1 ; i <= lenth ; ++ i)
+			c[i] = 0;
+	}
+
+	pair<int , int> nxto[Max_n][28] , f[22][Max_s][Max_n];
+
+	struct node
+	{
+		int l , r , to[Max_n] , val[Max_n] , tag , pos , bel;
+	}tree[Max_s << 2];
+
+	inline void push_up(const int tr)
+	{
+		for(int i = 1 ; i <= tot ; ++ i)
+			tree[tr].to[i] = tree[tr * 2 + 1].to[tree[tr * 2].to[i]],
+			tree[tr].val[i] = tree[tr * 2].val[i] + tree[tr * 2 + 1].val[tree[tr * 2].to[i]];
+	}
+
+	inline void build(const int l , const int r , const int tr , const int bel , const int mlen)
+	{
+		tree[tr].l = l , tree[tr].r = r , tree[tr].bel = bel , tree[tr].tag = 0 , tree[tr].pos = -1;
+		if(l == r)
+		{
+			if(l > mlen) return;
+			int ch = s[l] - 'a';
+			for(int i = 1 ; i <= tot; ++ i)
+				tree[tr].to[i] = nxto[i][ch].first , tree[tr].val[i] = nxto[i][ch].second;
+			return;
+		}
+		int mid = (l + r) >> 1;
+		build(l , mid , tr * 2 , bel - 1 , mlen) , build(mid + 1 , r , tr * 2 + 1 , bel - 1 , mlen);
+		push_up(tr);
+	}
+
+	inline void push_down(const int tr)
+	{
+		if(!tree[tr].tag) return;
+		int id = tree[tr].tag , pos = tree[tr].pos , bel = tree[tr * 2].bel;
+		tree[tr * 2].tag = id , tree[tr * 2].pos = pos;
+		for(int i = 1 ; i <= tot ; ++ i)
+			tree[tr * 2].to[i] = f[bel][beg[id] + pos][i].first,
+			tree[tr * 2].val[i] = f[bel][beg[id] + pos][i].second;
+		pos = (pos + (1 << bel)) % cir[id];
+		tree[tr * 2 + 1].tag = id , tree[tr * 2 + 1].pos = pos;
+		for(int i = 1 ; i <= tot ; ++ i)
+			tree[tr * 2 + 1].to[i] = f[bel][beg[id] + pos][i].first,
+			tree[tr * 2 + 1].val[i] = f[bel][beg[id] + pos][i].second;
+		tree[tr].tag = 0 , tree[tr].pos = -1;
+	}
+
+	inline pair<int , int> query(const int l , const int r , const int tr , const int pos)
+	{
+		int ll = tree[tr].l , rr = tree[tr].r;
+		if(ll > r || rr < l) 
+			return make_pair(pos , 0);
+		if(l <= ll && rr <= r) 
+			return make_pair(tree[tr].to[pos] , tree[tr].val[pos]);
+		push_down(tr);
+		pair<int , int> ret = query(l , r , tr * 2 , pos) , nex = query(l , r , tr * 2 + 1 , ret.first);
+		return make_pair(nex.first , ret.second + nex.second);
+	}
+
+	inline pair<int , int> add(const pair<int , int> x , const pair<int , int> y)
+	{
+		return make_pair(y.first , x.second + y.second);
+	}
+
+	inline void change(const int l , const int r , const int tr , const int id , const int pos)
+	{
+		int ll = tree[tr].l , rr = tree[tr].r;
+		if(ll > r || rr < l) return;
+		if(l <= ll && rr <= r)
+		{
+			int bel = tree[tr].bel;
+			tree[tr].tag = id , tree[tr].pos = pos;
+			for(int i = 1 ; i <= tot ; ++ i)
+				tree[tr].to[i] = f[bel][beg[id] + pos][i].first, 
+				tree[tr].val[i] = f[bel][beg[id] + pos][i].second;
+			return;
+		}
+		push_down(tr);
+		int mid = (ll + rr) >> 1 , reall = max(l , ll);
+		change(l , r , tr * 2 , id , pos);
+		if(l > mid) change(l , r , tr * 2 + 1 , id , pos);
+		else change(l , r , tr * 2 + 1 , id , (pos + mid - reall + 1) % cir[id]);
+		push_up(tr);
+	}
+
+	inline void main()
+	{
+		n = read() , q = read();
+		for(int i = 1 ; i <= n ; ++ i)
+			ins();
+		fail[1] = 1;
+		queue<int> zzz;
+		zzz.push(1);
+		while(zzz.size())
+		{
+			int now = zzz.front();
+			zzz.pop();
+			for(int i = 0 ; i < 26 ; ++ i)
+			{
+				if(!son[now][i])
+				{
+					son[now][i] = now == 1 ? 1 : son[fail[now]][i];
+					continue;
+				}
+				fail[son[now][i]] = now == 1 ? 1 : son[fail[now]][i];
+				siz[son[now][i]] += siz[fail[son[now][i]]];
+				zzz.push(son[now][i]);
+			}
+		}
+		for(int i = 1 ; i <= tot ; ++ i)
+			for(int ch = 0 ; ch < 26 ; ++ ch)
+				nxto[i][ch] = make_pair(son[i][ch] , siz[son[i][ch]]);
+		scanf("%s" , s + 1);
+		int lenth = strlen(s + 1) , len = 1 , lim = 0;
+		while(len < lenth) len <<= 1 , ++ lim;
+		build(1 , len , 1 , lim , lenth);
+		while(q --)
+		{
+			int opt = read() , l = read() , r = read();
+			if(opt == 2)
+				printf("%d\n" , query(l , r , 1 , 1).second);
+			else if(opt == 1)
+			{
+				scanf("%s" , c + alr);
+				beg[ ++ cnt] = alr , cir[cnt] = strlen(c + alr);// , alr += cir[cnt];
+				for(int i = 0 ; i < cir[cnt] ; ++ i)
+				{
+					int now = alr + i;
+					for(int j = 1 ; j <= tot ; ++ j)
+						f[0][now][j] = nxto[j][c[now] - 'a'];
+				}
+				for(int dep = 1 ; dep <= 20 ; ++ dep)
+					for(int i = 0 ; i < cir[cnt] ; ++ i)
+					{
+						int now = alr + i , nex = ((1 << (dep - 1)) + i) % cir[cnt] + alr;
+						for(int j = 1 ; j <= tot ; ++ j)
+							f[dep][now][j] = add(f[dep - 1][now][j] , f[dep - 1][nex][f[dep - 1][now][j].first]);
+					}
+				alr += cir[cnt];
+				change(l , r , 1 , cnt , 0);
+			}
+		}
+	}
+}
+
+int main()
+{
+	// freopen("data.in" , "r" , stdin);
+	thecold::main();
+	return 0;
+}
